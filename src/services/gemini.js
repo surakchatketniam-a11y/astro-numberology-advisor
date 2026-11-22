@@ -106,14 +106,49 @@ export function prepareImageForGemini(file, maxDimension = 1400, quality = 0.85)
   });
 }
 
-const REQUEST_TIMEOUT_MS = 60000;
+const TIMEOUT_MS = 60000;
+const START_TAG = '===LINE_SUMMARY_START===';
 
+// ระหว่างสตรีม: แสดงเฉพาะส่วนบทวิเคราะห์ และซ่อนแท็กสรุป LINE ที่ยังมาไม่ครบ
+export function parsePartialAdvisorText(rawText) {
+  let visible = rawText;
+  const idx = rawText.indexOf(START_TAG);
+  if (idx !== -1) {
+    visible = rawText.slice(0, idx);
+  } else {
+    for (let len = Math.min(START_TAG.length - 1, rawText.length); len > 0; len--) {
+      if (rawText.endsWith(START_TAG.slice(0, len))) {
+        visible = rawText.slice(0, rawText.length - len);
+        break;
+      }
+    }
+  }
+  return { analysis: stripEmojis(visible), lineSummary: '', streaming: true };
+}
+
+function throwForHttpError(status, data) {
+  const apiMsg = data?.error?.message || `HTTP ${status}`;
+  if (status === 400 || status === 403) {
+    throw new Error(`API Key หรือการตั้งค่าโมเดลไม่ถูกต้อง: ${apiMsg}`);
+  }
+  if (status === 429) {
+    throw new Error(`ใช้งานเกินโควตาชั่วคราว (Rate Limit): ${apiMsg}`);
+  }
+  throw new Error(`ไม่สามารถเชื่อมต่อ Gemini API ได้: ${apiMsg}`);
+}
+
+/**
+ * เรียก Gemini แบบสตรีม (SSE) ถ้าส่ง onPartial มา จะถูกเรียกทุกครั้งที่มีข้อความใหม่
+ * ด้วยผลที่ parse บางส่วนแล้ว ({ analysis, lineSummary: '', streaming: true })
+ * Timeout นับแบบ "ไม่มีข้อมูลเข้ามา" (reset ทุก chunk) ไม่ใช่เวลารวม
+ */
 export async function callGeminiAdvisor({
   apiKey,
   model = 'gemini-2.5-flash',
   prompt,
   image = null,
   signal = null,
+  onPartial = null,
 }) {
   const cleanKey = (apiKey || '').trim();
   if (!cleanKey) {
@@ -123,96 +158,138 @@ export async function callGeminiAdvisor({
   // ส่ง key ผ่าน header แทน query string เพื่อไม่ให้รั่วลง URL/log/proxy
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model
-  )}:generateContent`;
+  )}:streamGenerateContent?alt=sse`;
 
   const parts = [{ text: prompt }];
   if (image && image.base64 && image.mimeType) {
-    parts.push({
-      inline_data: {
-        mime_type: image.mimeType,
-        data: image.base64,
-      },
-    });
+    parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
   }
 
   const body = {
-    system_instruction: {
-      parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }],
-    },
-    contents: [
-      {
-        role: 'user',
-        parts,
-      },
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.9,
-      maxOutputTokens: 8192,
-    },
+    system_instruction: { parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }] },
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 8192 },
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let timedOut = false;
+  let timeoutId;
+  const armTimeout = () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, TIMEOUT_MS);
+  };
   if (signal) {
     if (signal.aborted) controller.abort();
     else signal.addEventListener('abort', () => controller.abort(), { once: true });
   }
 
-  let response;
+  const toFriendlyError = (err) => {
+    if (err?.name === 'AbortError') {
+      return new Error(
+        timedOut
+          ? 'การเชื่อมต่อ Gemini API ใช้เวลานานเกินไป กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'
+          : 'ยกเลิกการวิเคราะห์แล้ว'
+      );
+    }
+    return err instanceof Error && err.isGeminiError
+      ? err
+      : new Error('ไม่สามารถเชื่อมต่ออินเทอร์เน็ตหรือ Gemini API ได้ กรุณาลองใหม่อีกครั้ง');
+  };
+  const fail = (message) => {
+    const e = new Error(message);
+    e.isGeminiError = true;
+    return e;
+  };
+
+  let fullText = '';
+  let finishReason = null;
+
   try {
-    response = await fetch(endpoint, {
+    armTimeout();
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
-  } catch (err) {
-    if (err?.name === 'AbortError') {
-      throw new Error(
-        signal?.aborted
-          ? 'ยกเลิกการวิเคราะห์แล้ว'
-          : 'การเชื่อมต่อ Gemini API ใช้เวลานานเกินไป กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'
-      );
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      try {
+        throwForHttpError(response.status, data);
+      } catch (e) {
+        throw fail(e.message);
+      }
     }
-    throw new Error('ไม่สามารถเชื่อมต่ออินเทอร์เน็ตหรือ Gemini API ได้ กรุณาลองใหม่อีกครั้ง');
+
+    const handleEvent = (payload) => {
+      if (payload?.promptFeedback?.blockReason) {
+        throw fail('คำขอถูกระงับโดยระบบความปลอดภัยของ Gemini กรุณาปรับข้อความหรือรูปภาพแล้วลองใหม่');
+      }
+      if (payload?.error) {
+        throw fail(`ไม่สามารถเชื่อมต่อ Gemini API ได้: ${payload.error.message || 'unknown error'}`);
+      }
+      const candidate = payload?.candidates?.[0];
+      if (!candidate) return;
+      const chunkText = (candidate.content?.parts || []).map((p) => p.text || '').join('');
+      if (chunkText) {
+        fullText += chunkText;
+        if (onPartial) onPartial(parsePartialAdvisorText(fullText));
+      }
+      if (candidate.finishReason) finishReason = candidate.finishReason;
+    };
+
+    const processLine = (line) => {
+      if (!line.startsWith('data:')) return;
+      const json = line.slice(5).trim();
+      if (!json || json === '[DONE]') return;
+      let payload;
+      try {
+        payload = JSON.parse(json);
+      } catch {
+        return; // ข้ามบรรทัดที่ไม่สมบูรณ์
+      }
+      handleEvent(payload);
+    };
+
+    if (!response.body || !response.body.getReader) {
+      // เบราว์เซอร์ที่ไม่รองรับ stream: อ่านทั้งก้อนแล้วค่อย parse
+      (await response.text()).split(/\r?\n/).forEach(processLine);
+    } else {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        armTimeout();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop();
+        lines.forEach(processLine);
+      }
+      buffer += decoder.decode();
+      if (buffer) processLine(buffer);
+    }
+  } catch (err) {
+    throw toFriendlyError(err);
   } finally {
     clearTimeout(timeoutId);
   }
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const apiMsg = data?.error?.message || `HTTP ${response.status}`;
-    if (response.status === 400 || response.status === 403) {
-      throw new Error(`API Key หรือการตั้งค่าโมเดลไม่ถูกต้อง: ${apiMsg}`);
-    }
-    if (response.status === 429) {
-      throw new Error(`ใช้งานเกินโควตาชั่วคราว (Rate Limit): ${apiMsg}`);
-    }
-    throw new Error(`ไม่สามารถเชื่อมต่อ Gemini API ได้: ${apiMsg}`);
-  }
-
-  if (data?.promptFeedback?.blockReason) {
-    throw new Error('คำขอถูกระงับโดยระบบความปลอดภัยของ Gemini กรุณาปรับข้อความหรือรูปภาพแล้วลองใหม่');
-  }
-
-  const candidate = data?.candidates?.[0];
-  const text =
-    candidate?.content?.parts
-      ?.map((p) => p.text || '')
-      .join('\n')
-      .trim() || '';
-
+  const text = fullText.trim();
   if (!text) {
-    if (candidate?.finishReason === 'SAFETY') {
+    if (finishReason === 'SAFETY') {
       throw new Error('คำตอบถูกระงับโดยระบบความปลอดภัยของ Gemini กรุณาลองปรับคำถามใหม่');
     }
     throw new Error('ไม่พบข้อความตอบกลับจาก Gemini API กรุณาลองใหม่อีกครั้ง');
   }
 
   const parsed = parseGeminiAdvisorResponse(text);
-  if (candidate?.finishReason === 'MAX_TOKENS') {
+  if (finishReason === 'MAX_TOKENS') {
     parsed.analysis += '\n\n(หมายเหตุ: คำตอบถูกตัดเพราะยาวเกินกำหนด สามารถกดวิเคราะห์ใหม่เพื่อให้ได้คำตอบที่สมบูรณ์)';
     parsed.truncated = true;
   }

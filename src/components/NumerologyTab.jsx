@@ -117,6 +117,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
         apiKey: settings.apiKey,
         model: settings.model,
         prompt,
+        onPartial: setAiResult,
       });
 
       setAiResult(response);
@@ -129,6 +130,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
         lineSummary: response.lineSummary,
       });
     } catch (err) {
+      setAiResult(null);
       setAiError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API');
     } finally {
       setLoadingAI(false);
@@ -387,9 +389,9 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
           )}
 
           <LineShareBox
-            text={aiResult ? aiResult.lineSummary : offlineLineSummary}
+            text={aiResult && !aiResult.streaming ? aiResult.lineSummary : offlineLineSummary}
             title={
-              aiResult
+              aiResult && !aiResult.streaming
                 ? 'ข้อความสรุปเลขศาสตร์จาก AI สำหรับส่งต่อใน LINE'
                 : 'ข้อความสรุปเลขศาสตร์เบื้องต้นสำหรับส่งต่อใน LINE'
             }

@@ -99,6 +99,7 @@ export default function ImageAnalysisTab({
           base64: imageData.base64,
           mimeType: imageData.mimeType,
         },
+        onPartial: setAiResult,
       });
 
       setAiResult(response);
@@ -111,6 +112,7 @@ export default function ImageAnalysisTab({
         lineSummary: response.lineSummary,
       });
     } catch (err) {
+      setAiResult(null);
       setError(err.message || 'ไม่สามารถวิเคราะห์รูปภาพได้ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoadingAI(false);
@@ -248,10 +250,12 @@ export default function ImageAnalysisTab({
       {aiResult && (
         <div className="space-y-6">
           <FormattedAnalysis content={aiResult.analysis} model={settings.model} />
+          {!aiResult.streaming && (
           <LineShareBox
             text={aiResult.lineSummary}
             title="ข้อความสรุปจากภาพคำทำนาย (พร้อมส่งต่อใน LINE)"
           />
+          )}
         </div>
       )}
     </div>

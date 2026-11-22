@@ -25,10 +25,10 @@ export function stripMarkdownForLine(text) {
   return stripEmojis(text)
     .replace(/```[\s\S]*?```/g, (m) => m.replace(/```/g, ''))
     .replace(/^#{1,6}\s*/gm, '')
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/_(.*?)_/g, '$1')
+    .replace(/\*\*([^\n]*?)\*\*/g, '$1')
+    .replace(/(^|[^\w])__([^\n]+?)__(?=[^\w]|$)/g, '$1$2')
+    .replace(/(^|[^\w*])\*(?!\s)([^\n*]+?)\*(?=[^\w*]|$)/g, '$1$2')
+    .replace(/(^|[^\w])_(?!\s)([^\n_]+?)_(?=[^\w]|$)/g, '$1$2')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/^\s*[-*+]\s+/gm, '• ')
     .replace(/^\|.*\|$/gm, (row) => row.replace(/\|/g, ' ').trim())
@@ -106,15 +106,24 @@ export function prepareImageForGemini(file, maxDimension = 1400, quality = 0.85)
   });
 }
 
-export async function callGeminiAdvisor({ apiKey, model = 'gemini-2.5-flash', prompt, image = null }) {
+const REQUEST_TIMEOUT_MS = 60000;
+
+export async function callGeminiAdvisor({
+  apiKey,
+  model = 'gemini-2.5-flash',
+  prompt,
+  image = null,
+  signal = null,
+}) {
   const cleanKey = (apiKey || '').trim();
   if (!cleanKey) {
     throw new Error('กรุณากรอก Gemini API Key ในหน้าตั้งค่า (Settings) ก่อนใช้งานการวิเคราะห์ด้วย AI');
   }
 
+  // ส่ง key ผ่าน header แทน query string เพื่อไม่ให้รั่วลง URL/log/proxy
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model
-  )}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+  )}:generateContent`;
 
   const parts = [{ text: prompt }];
   if (image && image.base64 && image.mimeType) {
@@ -139,15 +148,37 @@ export async function callGeminiAdvisor({ apiKey, model = 'gemini-2.5-flash', pr
     generationConfig: {
       temperature: 0.7,
       topP: 0.9,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
     },
   };
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw new Error(
+        signal?.aborted
+          ? 'ยกเลิกการวิเคราะห์แล้ว'
+          : 'การเชื่อมต่อ Gemini API ใช้เวลานานเกินไป กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'
+      );
+    }
+    throw new Error('ไม่สามารถเชื่อมต่ออินเทอร์เน็ตหรือ Gemini API ได้ กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const data = await response.json().catch(() => ({}));
 
@@ -162,15 +193,28 @@ export async function callGeminiAdvisor({ apiKey, model = 'gemini-2.5-flash', pr
     throw new Error(`ไม่สามารถเชื่อมต่อ Gemini API ได้: ${apiMsg}`);
   }
 
+  if (data?.promptFeedback?.blockReason) {
+    throw new Error('คำขอถูกระงับโดยระบบความปลอดภัยของ Gemini กรุณาปรับข้อความหรือรูปภาพแล้วลองใหม่');
+  }
+
+  const candidate = data?.candidates?.[0];
   const text =
-    data?.candidates?.[0]?.content?.parts
+    candidate?.content?.parts
       ?.map((p) => p.text || '')
       .join('\n')
       .trim() || '';
 
   if (!text) {
+    if (candidate?.finishReason === 'SAFETY') {
+      throw new Error('คำตอบถูกระงับโดยระบบความปลอดภัยของ Gemini กรุณาลองปรับคำถามใหม่');
+    }
     throw new Error('ไม่พบข้อความตอบกลับจาก Gemini API กรุณาลองใหม่อีกครั้ง');
   }
 
-  return parseGeminiAdvisorResponse(text);
+  const parsed = parseGeminiAdvisorResponse(text);
+  if (candidate?.finishReason === 'MAX_TOKENS') {
+    parsed.analysis += '\n\n(หมายเหตุ: คำตอบถูกตัดเพราะยาวเกินกำหนด สามารถกดวิเคราะห์ใหม่เพื่อให้ได้คำตอบที่สมบูรณ์)';
+    parsed.truncated = true;
+  }
+  return parsed;
 }

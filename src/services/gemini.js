@@ -163,7 +163,7 @@ export async function checkProxyHealth(proxyUrl = '') {
 
 export async function testGeminiConnection({
   apiKey = '',
-  model = 'gemini-2.5-flash',
+  model = 'gemini-3-flash-preview',
   proxyUrl = '',
   useServerProxy = true,
 }) {
@@ -210,7 +210,7 @@ export async function testGeminiConnection({
  */
 export async function callGeminiAdvisor({
   apiKey = '',
-  model = 'gemini-2.5-flash',
+  model = 'gemini-3-flash-preview',
   prompt,
   image = null,
   signal = null,
@@ -380,7 +380,7 @@ export async function callGeminiAdvisor({
  */
 export async function callGeminiFollowUp({
   apiKey = '',
-  model = 'gemini-2.5-flash',
+  model = 'gemini-3-flash-preview',
   baseContext,
   baseAnalysis,
   messages = [],

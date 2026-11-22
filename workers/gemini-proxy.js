@@ -114,7 +114,7 @@ export default {
     }
 
     const body = await request.json().catch(() => ({}));
-    const model = typeof body.model === 'string' ? body.model.trim() : 'gemini-2.5-flash';
+    const model = typeof body.model === 'string' ? body.model.trim() : 'gemini-3-flash-preview';
     if (!ALLOWED_MODELS.has(model)) {
       return new Response(
         JSON.stringify({ error: { message: `โมเดล "${model}" ไม่ได้รับอนุญาต` } }),

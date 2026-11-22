@@ -133,7 +133,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const model = typeof body.model === 'string' ? body.model.trim() : 'gemini-2.5-flash';
+  const model = typeof body.model === 'string' ? body.model.trim() : 'gemini-3-flash-preview';
   if (!ALLOWED_MODELS.has(model)) {
     res.status(400).json({
       error: { message: `โมเดล "${model}" ไม่ได้รับอนุญาตบนเซิร์ฟเวอร์นี้` },

@@ -165,3 +165,40 @@ describe('calculateZodiacComparison — real positions', () => {
     expect(text).toContain('ลัคนา:');
   });
 });
+
+describe('birth chart for 29 Oct 1977 05:00 (Bangkok) — cross-checked reference', () => {
+  const r = calculateZodiacComparison({
+    day: 29, month: 10, yearAD: 1977, birthTime: '05:00', birthProvince: 'กรุงเทพมหานคร',
+  });
+
+  it('uses Lahiri ayanamsa ~23.54° for 1977', () => {
+    expect(r.ayanamsa).toBeCloseTo(23.54, 1);
+  });
+
+  it('Thai (sidereal): Sun Libra, Moon Taurus', () => {
+    expect(r.thai.sun.sign.id).toBe('libra');
+    expect(r.thai.sun.degreeInSign).toBeCloseTo(11.8, 0);
+    expect(r.thai.moon.sign.id).toBe('taurus');
+    expect(r.thai.moon.degreeInSign).toBeCloseTo(3.4, 0);
+  });
+
+  it('Western (tropical): Sun Scorpio, Moon Taurus', () => {
+    expect(r.western.sun.sign.id).toBe('scorpio');
+    expect(r.western.sun.degreeInSign).toBeCloseTo(5.4, 0);
+    expect(r.western.moon.sign.id).toBe('taurus');
+    expect(r.western.moon.degreeInSign).toBeCloseTo(26.9, 0);
+  });
+
+  it('exposes the ascendant ruler (ตนุลัคน์) next to the sun-sign ruler', () => {
+    expect(r.thaiSign.thaiRuler).toContain('ศุกร์'); // ตุลย์
+    expect(r.thai.asc).toBeTruthy();
+    expect(r.thaiAscRuler).toBe(r.thai.asc.sign.thaiRuler);
+    expect(generateZodiacLineSummary(r)).toContain('ตนุลัคน์');
+  });
+
+  it('has no ascendant ruler without time/province', () => {
+    const base = calculateZodiacComparison({ day: 29, month: 10, yearAD: 1977 });
+    expect(base.thaiAscRuler).toBeNull();
+    expect(base.westernAscRuler).toBeNull();
+  });
+});

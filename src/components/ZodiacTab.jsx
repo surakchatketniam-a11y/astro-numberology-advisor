@@ -138,6 +138,7 @@ export default function ZodiacTab({
         `- โหราศาสตร์สากล (สายนะวิธี): ${result.westernSign.thName} / ${result.westernSign.enName} (${result.westernSign.element}, ดาวประจำตัว: ${result.westernSign.westernRuler})`,
         `- ตำแหน่งดาวจริง (นิรายนะ Lahiri ${result.ayanamsa.toFixed(2)}°): ${positionText(result.thai)}`,
         `- ตำแหน่งดาวจริง (สายนะ): ${positionText(result.western)}`,
+        result.thaiAscRuler ? `- ตนุลัคน์ (เจ้าเรือนลัคนาไทย): ${result.thaiAscRuler}` : '',
         result.notes.length ? `- ข้อจำกัดของข้อมูล: ${result.notes.join(' / ')}` : '',
         `- เลขรหัสชีวิต (Life Path Number): ${result.lifePathNumber}`,
         focusTopic.trim() ? `- ประเด็นที่ผู้ใช้อยากปรึกษาเป็นพิเศษ: ${focusTopic.trim()}` : '',
@@ -326,9 +327,17 @@ export default function ZodiacTab({
 
               <PositionRows chart={result.thai} accent="text-[#FFCE3E]" />
 
-              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
-                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
-                <span className="text-white font-medium">{result.thaiSign.thaiRuler}</span>
+              <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
+                <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[#7D7D7D]">ดาวประจำราศีเกิด</span>
+                  <span className="text-white font-medium">{result.thaiSign.thaiRuler}</span>
+                </div>
+                {result.thaiAscRuler && (
+                  <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+                    <span className="text-[#7D7D7D]">ตนุลัคน์ (เจ้าเรือนลัคนา)</span>
+                    <span className="text-white font-medium">{result.thaiAscRuler}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3 text-base leading-[1.7]">
@@ -364,9 +373,17 @@ export default function ZodiacTab({
 
               <PositionRows chart={result.western} accent="text-[#29ABE2]" />
 
-              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
-                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
-                <span className="text-white font-medium">{result.westernSign.westernRuler}</span>
+              <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
+                <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[#7D7D7D]">ดาวประจำราศีเกิด</span>
+                  <span className="text-white font-medium">{result.westernSign.westernRuler}</span>
+                </div>
+                {result.westernAscRuler && (
+                  <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+                    <span className="text-[#7D7D7D]">ดาวประจำลัคนา</span>
+                    <span className="text-white font-medium">{result.westernAscRuler}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3 text-base leading-[1.7]">

@@ -1,5 +1,6 @@
 import { computeBirthChart, formatDegree } from './ephemeris';
 import { findProvince } from './provinces';
+import { dignitySuffix, getDignity } from './dignity';
 
 export const ZODIAC_DATA = {
   aries: {
@@ -259,9 +260,10 @@ export function calculateLifePathNumber(yearAD, month, day) {
   return sum;
 }
 
-function describeBody(position, uncertain = false) {
+function describeBody(position, uncertain = false, bodyKey = null) {
   if (!position) return null;
   return {
+    dignity: bodyKey ? getDignity(bodyKey, position.signId, position.degreeInSign) : null,
     sign: ZODIAC_DATA[position.signId],
     degreeInSign: position.degreeInSign,
     longitude: position.longitude,
@@ -285,13 +287,13 @@ export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', 
   const chart = computeBirthChart({ yearAD: y, month: m, day: d, birthTime, location: province });
 
   const thai = {
-    sun: describeBody(chart.sidereal.sun, chart.uncertain.sun),
-    moon: describeBody(chart.sidereal.moon, chart.uncertain.moon),
+    sun: describeBody(chart.sidereal.sun, chart.uncertain.sun, 'sun'),
+    moon: describeBody(chart.sidereal.moon, chart.uncertain.moon, 'moon'),
     asc: describeBody(chart.sidereal.asc),
   };
   const western = {
-    sun: describeBody(chart.tropical.sun, chart.uncertain.sun),
-    moon: describeBody(chart.tropical.moon, chart.uncertain.moon),
+    sun: describeBody(chart.tropical.sun, chart.uncertain.sun, 'sun'),
+    moon: describeBody(chart.tropical.moon, chart.uncertain.moon, 'moon'),
     asc: describeBody(chart.tropical.asc),
   };
 
@@ -352,7 +354,7 @@ export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', 
 function bodyLine(label, body) {
   if (!body) return null;
   const flag = body.uncertain ? ' (โดยประมาณ)' : '';
-  return `${label}: ${body.sign.thName} ${formatDegree(body.degreeInSign)}${flag}`;
+  return `${label}: ${body.sign.thName} ${formatDegree(body.degreeInSign)}${flag}${dignitySuffix(body.dignity)}`;
 }
 
 export function generateZodiacLineSummary(result) {

@@ -19,6 +19,7 @@ import {
 import { callGeminiAdvisor } from '../services/gemini';
 import { PROVINCE_NAMES } from '../utils/provinces';
 import { formatDegree } from '../utils/ephemeris';
+import { DignityBadge } from './common';
 import FormattedAnalysis from './FormattedAnalysis';
 
 function PositionRows({ chart, accent }) {
@@ -35,6 +36,11 @@ function PositionRows({ chart, accent }) {
           <span className="text-white font-medium text-right">
             <span className={accent}>{body.sign.thName}</span> {formatDegree(body.degreeInSign)}
             {body.uncertain && <span className="text-[#7D7D7D] font-normal"> (โดยประมาณ)</span>}
+            {body.dignity && (
+              <span className="ml-2 align-middle">
+                <DignityBadge dignity={body.dignity} />
+              </span>
+            )}
           </span>
         </div>
       ))}
@@ -50,7 +56,7 @@ function positionText(chart) {
     ['ลัคนา', chart.asc],
   ]
     .filter(([, b]) => b)
-    .map(([label, b]) => `${label}${b.sign.thName} ${formatDegree(b.degreeInSign)}`)
+    .map(([label, b]) => `${label}${b.sign.thName} ${formatDegree(b.degreeInSign)}${b.dignity ? ` (${b.dignity.label})` : ''}`)
     .join(', ');
 }
 

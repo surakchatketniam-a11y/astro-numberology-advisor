@@ -93,3 +93,20 @@ describe('date helpers', () => {
     expect(thaiToday(new Date(Date.UTC(2026, 10, 21, 18, 0)))).toEqual({ year: 2026, month: 11, day: 22 });
   });
 });
+
+describe('dignity in transits', () => {
+  it('attaches dignity to planets, Sun and Moon and summarises it', () => {
+    // 22 ต.ค. 2026: อาทิตย์อยู่ราศีตุลย์ (นิรายนะ) = นิจ
+    const f = getDailyForecast({ signId: 'aries', year: 2026, month: 10, day: 22 });
+    expect(f.sun.sign.id).toBe('libra');
+    expect(f.sun.dignity).toMatchObject({ type: 'debil' });
+    f.planets.forEach((p) => expect(p).toHaveProperty('dignity'));
+    expect(f.dignityNotes.join(' ')).toContain('อาทิตย์อยู่ราศีตุลย์');
+    expect(f.lineSummary).toContain('สถานะดาว');
+  });
+
+  it('has no dignity note for a Sun in a neutral sign', () => {
+    const f = getDailyForecast({ signId: 'aries', year: 2026, month: 11, day: 22 }); // อาทิตย์พิจิก
+    expect(f.sun.dignity).toBeNull();
+  });
+});

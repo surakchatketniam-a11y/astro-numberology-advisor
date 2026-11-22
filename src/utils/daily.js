@@ -1,5 +1,6 @@
 import { SIGN_IDS, siderealMoonSun, siderealPlanets, thaiLocalToDate, formatDegree } from './ephemeris';
 import { THAI_DAYS, THAI_MONTHS, ZODIAC_DATA } from './zodiac';
+import { getDignity } from './dignity';
 
 export const PLANET_LABELS = {
   mercury: 'พุธ',
@@ -106,6 +107,7 @@ export function getDailyForecast({ signId, year, month, day }) {
     degreeInSign: p.degreeInSign,
     house: houseFrom(natalIndex, p.signIndex),
     retrograde: p.retrograde,
+    dignity: getDignity(key, p.signId, p.degreeInSign),
   }));
   const jupiterHouse = planetRows.find((r) => r.key === 'jupiter').house;
   const saturnHouse = planetRows.find((r) => r.key === 'saturn').house;
@@ -134,8 +136,8 @@ export function getDailyForecast({ signId, year, month, day }) {
     date: { year, month, day },
     dateLabel: `${day} ${THAI_MONTHS[month - 1]} พ.ศ. ${year + 543}`,
     dayOfWeek: dayInfo,
-    sun: { sign: ZODIAC_DATA[sun.signId], degreeInSign: sun.degreeInSign },
-    moon: { sign: ZODIAC_DATA[moon.signId], degreeInSign: moon.degreeInSign, house: moonHouse, changesSign: moonChangesSign },
+    sun: { sign: ZODIAC_DATA[sun.signId], degreeInSign: sun.degreeInSign, dignity: getDignity('sun', sun.signId, sun.degreeInSign) },
+    moon: { sign: ZODIAC_DATA[moon.signId], degreeInSign: moon.degreeInSign, house: moonHouse, changesSign: moonChangesSign, dignity: getDignity('moon', moon.signId, moon.degreeInSign) },
     planets: planetRows,
     mercuryRetrograde,
     headline: `จันทร์จรเรือนที่ ${moonHouse}: ${houseInfo.theme}`,
@@ -144,6 +146,13 @@ export function getDailyForecast({ signId, year, month, day }) {
     advice,
     luckyColor: dayInfo.color,
   };
+  forecast.dignityNotes = [
+    { label: 'อาทิตย์', body: forecast.sun },
+    { label: 'จันทร์', body: forecast.moon },
+    ...planetRows.map((p) => ({ label: p.label, body: p })),
+  ]
+    .filter((x) => x.body.dignity)
+    .map((x) => `${x.label}อยู่${x.body.sign.thName} (${x.body.dignity.label})`);
   forecast.lineSummary = generateDailyLineSummary(forecast);
   return forecast;
 }
@@ -158,6 +167,7 @@ export function generateDailyLineSummary(f) {
     ``,
     ...f.areas.map((a) => `• ${a.label} ${bar(a.score)}: ${a.text}`),
     f.mercuryRetrograde ? `• พุธเดินถอยหลัง: ตรวจทานเอกสารและนัดหมายซ้ำก่อนยืนยัน` : null,
+    f.dignityNotes.length ? `• สถานะดาว: ${f.dignityNotes.join(', ')}` : null,
     ``,
     `แนวทางวันนี้:`,
     ...f.advice.map((t, i) => `${i + 1}) ${t}`),

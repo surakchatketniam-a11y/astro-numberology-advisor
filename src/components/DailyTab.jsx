@@ -10,7 +10,7 @@ import {
 import { formatDegree } from '../utils/ephemeris';
 import { getDailyForecast, shiftDate, thaiToday } from '../utils/daily';
 import { useAiAdvisor } from '../hooks/useAiAdvisor';
-import { AiActionBlock, ScoreBar, SignPicker, loadSavedSign, saveSign } from './common';
+import { AiActionBlock, DignityBadge, ScoreBar, SignPicker, loadSavedSign, saveSign } from './common';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
 
@@ -57,9 +57,12 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
       `- ดาวจรอื่นๆ: ${f.planets
         .map((p) => `${p.label}${p.sign.thName} เรือน ${p.house}${p.retrograde ? ' (ถอยหลัง)' : ''}`)
         .join(', ')}`,
+      f.dignityNotes.length ? `- สถานะอุจจ์/นิจของดาวจร: ${f.dignityNotes.join(', ')}` : '',
       `- คะแนนเบื้องต้นรายด้าน: ${f.areas.map((a) => `${a.label} ${a.score}/5`).join(', ')}`,
       `ขอให้อธิบายภาพรวมของวัน เปรียบเทียบมุมมองโหราศาสตร์ไทยกับสากลสั้นๆ เชื่อมโยงกับการจัดการอารมณ์และการบริหารความเสี่ยง พร้อมแนวทางปฏิบัติ 3-5 ข้อ และสรุปสำหรับส่งต่อใน LINE`,
-    ].join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
     const response = await ai.run(prompt);
     if (response) {
       onSaveHistory({
@@ -147,7 +150,8 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
             <h3 className="text-lg sm:text-xl font-medium text-white mt-0.5">{forecast.headline}</h3>
             <p className="text-sm text-[#7D7D7D] mt-0.5">
               จันทร์อยู่{forecast.moon.sign.thName} {formatDegree(forecast.moon.degreeInSign)} (เที่ยงวัน)
-              {forecast.moon.changesSign && ' • ย้ายราศีในวันนี้'}
+              {forecast.moon.changesSign && ' • ย้ายราศีในวันนี้'}{' '}
+              <DignityBadge dignity={forecast.moon.dignity} />
             </p>
           </div>
         </div>
@@ -212,7 +216,9 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
                   {forecast.sun.sign.thName} {formatDegree(forecast.sun.degreeInSign)}
                 </td>
                 <td className="py-2 pr-3">—</td>
-                <td className="py-2 text-[#7D7D7D]">เดินหน้า</td>
+                <td className="py-2 text-[#7D7D7D]">
+                  เดินหน้า <DignityBadge dignity={forecast.sun.dignity} />
+                </td>
               </tr>
               {forecast.planets.map((p) => (
                 <tr key={p.key} className="border-b border-[#202020] last:border-0">
@@ -222,7 +228,7 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
                   </td>
                   <td className="py-2 pr-3">{p.house}</td>
                   <td className={`py-2 ${p.retrograde ? 'text-[#FFC000]' : 'text-[#7D7D7D]'}`}>
-                    {p.retrograde ? 'ถอยหลัง' : 'เดินหน้า'}
+                    {p.retrograde ? 'ถอยหลัง' : 'เดินหน้า'} <DignityBadge dignity={p.dignity} />
                   </td>
                 </tr>
               ))}

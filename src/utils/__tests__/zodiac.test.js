@@ -202,3 +202,15 @@ describe('birth chart for 29 Oct 1977 05:00 (Bangkok) — cross-checked referenc
     expect(base.westernAscRuler).toBeNull();
   });
 });
+
+describe('dignity in the natal chart (29 Oct 1977)', () => {
+  it('shows Sun in Libra as debilitated and Moon at 3.4° Taurus as great exaltation (Thai)', () => {
+    const r = calculateZodiacComparison({ day: 29, month: 10, yearAD: 1977, birthTime: '05:00' });
+    expect(r.thai.sun.dignity).toMatchObject({ type: 'debil', label: 'นิจ' });
+    expect(r.thai.moon.dignity).toMatchObject({ type: 'exalt', great: true, label: 'มหาอุจจ์' });
+    // สากล: อาทิตย์พิจิกและจันทร์พฤษภ (26.9°) -> จันทร์ยังอุจจ์ แต่ไม่ใช่มหาอุจจ์
+    expect(r.western.sun.dignity).toBeNull();
+    expect(r.western.moon.dignity).toMatchObject({ type: 'exalt', great: false });
+    expect(generateZodiacLineSummary(r)).toContain('[มหาอุจจ์]');
+  });
+});

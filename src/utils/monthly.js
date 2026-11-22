@@ -136,7 +136,7 @@ export function getMonthlyForecast({ signId, year, month }) {
         day,
         type: 'ingress',
         title: `อาทิตย์ย้ายเข้า${now.sun.sign.thName}`,
-        text: `เข้าสู่เรือนที่ ${h} (${HOUSE_THEMES[h].theme}) — ${PLANET_HINT.sun}เปลี่ยนไปตามธีมนี้`,
+        text: `เข้าสู่เรือนที่ ${h} (${HOUSE_THEMES[h].theme}) — ${PLANET_HINT.sun}เปลี่ยนไปตามธีมนี้${now.sun.dignity ? ` • อาทิตย์เข้าราศี${now.sun.dignity.type === 'exalt' ? 'อุจจ์' : 'นิจ'}` : ''}`,
       });
     }
     for (const p of now.planets) {
@@ -146,7 +146,7 @@ export function getMonthlyForecast({ signId, year, month }) {
           day,
           type: 'ingress',
           title: `${p.label}ย้ายเข้า${p.sign.thName}`,
-          text: `เข้าสู่เรือนที่ ${p.house} (${HOUSE_THEMES[p.house].theme}) — เกี่ยวกับ${PLANET_HINT[p.key]}`,
+          text: `เข้าสู่เรือนที่ ${p.house} (${HOUSE_THEMES[p.house].theme}) — เกี่ยวกับ${PLANET_HINT[p.key]}${p.dignity ? ` • ${p.label}เข้าราศี${p.dignity.type === 'exalt' ? 'อุจจ์' : 'นิจ'}` : ''}`,
         });
       }
     }

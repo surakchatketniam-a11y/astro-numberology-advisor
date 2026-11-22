@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0b1120"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="45%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="goldSoft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#d4af37" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Navy Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Subtle Outer Zodiac Ring -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="url(#goldSoft)" stroke-width="4" stroke-dasharray="6 10"/>
+  <circle cx="256" cy="256" r="172" fill="none" stroke="url(#gold)" stroke-width="3" opacity="0.75"/>
+  <circle cx="256" cy="256" r="126" fill="none" stroke="url(#goldSoft)" stroke-width="2" opacity="0.5"/>
+
+  <!-- 4 Cardinal Points -->
+  <g fill="url(#gold)">
+    <polygon points="256,44 264,76 256,88 248,76"/>
+    <polygon points="256,468 264,436 256,424 248,436"/>
+    <polygon points="44,256 76,248 88,256 76,264"/>
+    <polygon points="468,256 436,248 424,256 436,264"/>
+  </g>
+
+  <!-- Center 8-Point Celestial Star -->
+  <g transform="translate(256,256)">
+    <path d="M0,-108 L22,-22 L108,0 L22,22 L0,108 L-22,22 L-108,0 L-22,-22 Z" fill="url(#gold)"/>
+    <path d="M0,-62 L14,-14 L62,0 L14,14 L0,62 L-14,14 L-62,0 L-14,-14 Z" fill="#0f172a"/>
+    <circle cx="0" cy="0" r="18" fill="url(#gold)"/>
+  </g>
+
+  <!-- Crescent Accent Top Right -->
+  <path d="M358,136 A32,32 0 1,0 388,184 A26,26 0 1,1 358,136 Z" fill="url(#gold)" opacity="0.9"/>
+
+  <!-- Small Stars -->
+  <circle cx="144" cy="148" r="5" fill="#fde68a" opacity="0.85"/>
+  <circle cx="372" cy="364" r="4" fill="#fde68a" opacity="0.75"/>
+  <circle cx="138" cy="356" r="3.5" fill="#d4af37" opacity="0.7"/>
+</svg>

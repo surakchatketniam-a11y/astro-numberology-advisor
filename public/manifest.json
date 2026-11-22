@@ -1,0 +1,59 @@
+{
+  "name": "Astro & Numerology Advisor",
+  "short_name": "Astro Advisor",
+  "description": "ที่ปรึกษาด้านโหราศาสตร์ไทย โหราศาสตร์สากล และเลขศาสตร์เชิงจิตวิทยา พร้อมระบบวิเคราะห์ด้วย AI",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1120",
+  "theme_color": "#0f172a",
+  "lang": "th",
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "เช็กราศี & ดวงชะตา",
+      "short_name": "เช็กราศี",
+      "url": "/?tab=zodiac",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "วิเคราะห์เลขศาสตร์",
+      "short_name": "เลขศาสตร์",
+      "url": "/?tab=numerology",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "วิเคราะห์ภาพคำทำนาย",
+      "short_name": "ภาพคำทำนาย",
+      "url": "/?tab=image",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

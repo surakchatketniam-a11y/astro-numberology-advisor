@@ -57,7 +57,7 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
       `- ดาวจรอื่นๆ: ${f.planets
         .map((p) => `${p.label}${p.sign.thName} เรือน ${p.house}${p.retrograde ? ' (ถอยหลัง)' : ''}`)
         .join(', ')}`,
-      f.dignityNotes.length ? `- สถานะอุจจ์/นิจของดาวจร: ${f.dignityNotes.join(', ')}` : '',
+      f.dignityNotes.length ? `- สถานะอุจจ์/นิจ/เกษตรของดาวจร: ${f.dignityNotes.join(', ')}` : '',
       `- คะแนนเบื้องต้นรายด้าน: ${f.areas.map((a) => `${a.label} ${a.score}/5`).join(', ')}`,
       `ขอให้อธิบายภาพรวมของวัน เปรียบเทียบมุมมองโหราศาสตร์ไทยกับสากลสั้นๆ เชื่อมโยงกับการจัดการอารมณ์และการบริหารความเสี่ยง พร้อมแนวทางปฏิบัติ 3-5 ข้อ และสรุปสำหรับส่งต่อใน LINE`,
     ]

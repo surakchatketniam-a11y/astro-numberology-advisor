@@ -107,13 +107,16 @@ export function AiActionBlock({ settings, loadingAI, aiError, onRun, onStop, run
 
 export function DignityBadge({ dignity }) {
   if (!dignity) return null;
-  const exalt = dignity.type === 'exalt';
+  const style =
+    dignity.type === 'exalt'
+      ? 'text-[#4ade80] border-[#1f5c3a] bg-[#0d1f15]'
+      : dignity.type === 'debil'
+        ? 'text-[#ff8a80] border-[#59302d] bg-[#291614]'
+        : 'text-[#FFC000] border-[#594300] bg-[#2e2300]';
   return (
     <span
       title={dignity.text}
-      className={`inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium border ${
-        exalt ? 'text-[#4ade80] border-[#1f5c3a] bg-[#0d1f15]' : 'text-[#ff8a80] border-[#59302d] bg-[#291614]'
-      }`}
+      className={`inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium border ${style}`}
     >
       {dignity.label}
     </span>

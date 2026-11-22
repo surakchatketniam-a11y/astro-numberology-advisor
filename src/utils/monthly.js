@@ -12,6 +12,7 @@ import {
 } from './daily';
 import { SIGN_IDS } from './ephemeris';
 import { THAI_MONTHS, ZODIAC_DATA } from './zodiac';
+import { dignitySignWord } from './dignity';
 
 // ตำราดาวจร (แบบย่อ): เรือนที่ดาวให้คุณเมื่อจรผ่าน นับจากราศีกำเนิด
 const SUN_FAVORABLE = [3, 6, 10, 11];
@@ -138,7 +139,7 @@ export function getMonthlyForecast({ signId, year, month }) {
         day,
         type: 'ingress',
         title: `อาทิตย์ย้ายเข้า${now.sun.sign.thName}`,
-        text: `เข้าสู่เรือนที่ ${h} (${HOUSE_THEMES[h].theme}) — ${PLANET_HINT.sun}เปลี่ยนไปตามธีมนี้${now.sun.dignity ? ` • อาทิตย์เข้าราศี${now.sun.dignity.type === 'exalt' ? 'อุจจ์' : 'นิจ'}` : ''}`,
+        text: `เข้าสู่เรือนที่ ${h} (${HOUSE_THEMES[h].theme}) — ${PLANET_HINT.sun}เปลี่ยนไปตามธีมนี้${now.sun.dignity ? ` • อาทิตย์เข้า${dignitySignWord(now.sun.dignity.type)}` : ''}`,
       });
     }
     for (const p of now.planets) {
@@ -148,7 +149,7 @@ export function getMonthlyForecast({ signId, year, month }) {
           day,
           type: 'ingress',
           title: `${p.label}ย้ายเข้า${p.sign.thName}`,
-          text: `เข้าสู่เรือนที่ ${p.house} (${HOUSE_THEMES[p.house].theme}) — เกี่ยวกับ${PLANET_HINT[p.key]}${p.dignity ? ` • ${p.label}เข้าราศี${p.dignity.type === 'exalt' ? 'อุจจ์' : 'นิจ'}` : ''}`,
+          text: `เข้าสู่เรือนที่ ${p.house} (${HOUSE_THEMES[p.house].theme}) — เกี่ยวกับ${PLANET_HINT[p.key]}${p.dignity ? ` • ${p.label}เข้า${dignitySignWord(p.dignity.type)}` : ''}`,
         });
       }
     }

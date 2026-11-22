@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDignity, oppositeSign } from '../dignity';
+import { dignitySignWord, getDignity, oppositeSign } from '../dignity';
 
 describe('getDignity', () => {
   it('detects exaltation and debilitation signs for each classical planet', () => {
@@ -35,5 +35,43 @@ describe('getDignity', () => {
   it('exaltation and debilitation signs are always opposite', () => {
     expect(oppositeSign('aries')).toBe('libra');
     expect(oppositeSign('pisces')).toBe('virgo');
+  });
+});
+
+describe('เกษตร (own sign)', () => {
+  it('detects own signs for all classical planets (including two-sign rulers)', () => {
+    const own = [
+      ['sun', ['leo']],
+      ['moon', ['cancer']],
+      ['mars', ['aries', 'scorpio']],
+      ['mercury', ['gemini']],
+      ['jupiter', ['sagittarius', 'pisces']],
+      ['venus', ['taurus', 'libra']],
+      ['saturn', ['capricorn', 'aquarius']],
+    ];
+    for (const [body, signs] of own) {
+      for (const sign of signs) {
+        expect(getDignity(body, sign, 12)).toMatchObject({ type: 'own', label: 'เกษตร' });
+      }
+    }
+  });
+
+  it('never conflicts with debilitation, and exaltation wins for Mercury in Virgo', () => {
+    expect(getDignity('mars', 'cancer', 10).type).toBe('debil');
+    expect(getDignity('jupiter', 'capricorn', 10).type).toBe('debil');
+    expect(getDignity('venus', 'virgo', 10).type).toBe('debil');
+    expect(getDignity('mercury', 'virgo', 15)).toMatchObject({ type: 'exalt', great: true, own: true });
+    expect(getDignity('mercury', 'virgo', 3)).toMatchObject({ type: 'exalt', great: false, label: 'อุจจ์' });
+  });
+
+  it('neutral sign remains null', () => {
+    expect(getDignity('moon', 'gemini', 5)).toBeNull();
+    expect(getDignity('saturn', 'gemini', 5)).toBeNull();
+  });
+
+  it('sign wording', () => {
+    expect(dignitySignWord('own')).toBe('ราศีเกษตร');
+    expect(dignitySignWord('exalt')).toBe('ราศีอุจจ์');
+    expect(dignitySignWord('debil')).toBe('ราศีนิจ');
   });
 });

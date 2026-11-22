@@ -19,7 +19,7 @@ import {
 import { callGeminiAdvisor } from '../services/gemini';
 import { PROVINCE_NAMES } from '../utils/provinces';
 import { formatDegree } from '../utils/ephemeris';
-import { DignityBadge } from './common';
+import { DignityBadge, TermLink } from './common';
 import ProfileBar from './ProfileBar';
 import FormattedAnalysis from './FormattedAnalysis';
 
@@ -431,6 +431,11 @@ export default function ZodiacTab({
                   : 'มุมมองเปรียบเทียบ 2 ระบบ (ไทย vs สากล)'}
               </p>
               <p className="text-[#a6a6a6]">{result.comparisonNote}</p>
+              <p className="text-sm text-[#7D7D7D] mt-2">
+                ศัพท์ที่ควรรู้: <TermLink id="sidereal">นิรายนะ</TermLink> •{' '}
+                <TermLink id="tropical">สายนะ</TermLink> • <TermLink id="ayanamsa">อายนางศะ</TermLink> •{' '}
+                <TermLink id="ascendant">ลัคนา</TermLink> • <TermLink id="moon-sign">ราศีจันทร์</TermLink>
+              </p>
               {result.notes.map((note) => (
                 <p key={note} className="text-sm text-[#7D7D7D] mt-2">
                   * {note}

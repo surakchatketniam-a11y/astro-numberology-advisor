@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  BookOpen,
   CalendarDays,
   CalendarRange,
   Clock,
@@ -18,6 +19,7 @@ import DailyTab from './components/DailyTab';
 import MonthlyTab from './components/MonthlyTab';
 import CompatibilityTab from './components/CompatibilityTab';
 import { ProfilesProvider } from './context/ProfilesContext';
+import { GlossaryProvider, useGlossary } from './context/GlossaryContext';
 import SettingsModal from './components/SettingsModal';
 import HistoryModal from './components/HistoryModal';
 import {
@@ -50,7 +52,8 @@ function getInitialTab() {
   return 'zodiac';
 }
 
-export default function App() {
+function AppShell() {
+  const { openGlossary } = useGlossary();
   const [activeTab, setActiveTab] = useState(getInitialTab);
   const [settings, setSettings] = useState(() => loadSettings());
   const [history, setHistory] = useState(() => loadHistory());
@@ -119,7 +122,6 @@ export default function App() {
   };
 
   return (
-    <ProfilesProvider>
     <div className="min-h-dvh bg-black text-white flex flex-col pb-24 md:pb-12">
       {/* Minimalist Floating Black Top Bar */}
       <header className="sticky top-0 z-30 bg-black border-b border-[#202020]">
@@ -161,6 +163,16 @@ export default function App() {
                 <span className="hidden sm:inline">ติดตั้งแอป</span>
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => openGlossary()}
+              className="relative inline-flex items-center gap-2 px-3 h-10 bg-transparent hover:bg-[#202020] border border-[#333333] hover:border-white/50 text-xs sm:text-sm text-white transition-colors cursor-pointer"
+              aria-label="เปิดหน้าคำศัพท์"
+            >
+              <BookOpen className="h-4 w-4 text-[#FFC000]" />
+              <span className="hidden sm:inline">คำศัพท์</span>
+            </button>
 
             <button
               type="button"
@@ -345,6 +357,15 @@ export default function App() {
         onImport={handleImportHistory}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ProfilesProvider>
+      <GlossaryProvider>
+        <AppShell />
+      </GlossaryProvider>
     </ProfilesProvider>
   );
 }

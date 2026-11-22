@@ -4,6 +4,8 @@ import { ZODIAC_DATA } from '../utils/zodiac';
 import { SIGN_IDS } from '../utils/ephemeris';
 import { useProfiles } from '../context/ProfilesContext';
 import { profileSignId } from '../utils/profiles';
+import { useGlossary } from '../context/GlossaryContext';
+import { dignityTermId } from '../data/glossary';
 
 const SIGN_KEY = 'astro_advisor_daily_sign_v1';
 
@@ -129,6 +131,7 @@ export function AiActionBlock({ settings, loadingAI, aiError, onRun, onStop, run
 }
 
 export function DignityBadge({ dignity }) {
+  const { openGlossary } = useGlossary();
   if (!dignity) return null;
   const style =
     dignity.type === 'exalt'
@@ -137,11 +140,28 @@ export function DignityBadge({ dignity }) {
         ? 'text-[#ff8a80] border-[#59302d] bg-[#291614]'
         : 'text-[#FFC000] border-[#594300] bg-[#2e2300]';
   return (
-    <span
-      title={dignity.text}
-      className={`inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium border ${style}`}
+    <button
+      type="button"
+      onClick={() => openGlossary(dignityTermId(dignity))}
+      title={`${dignity.text} (กดเพื่อดูความหมาย)`}
+      aria-label={`${dignity.label} — ดูความหมายในหน้าคำศัพท์`}
+      className={`inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium border cursor-pointer hover:brightness-125 ${style}`}
     >
       {dignity.label}
-    </span>
+    </button>
+  );
+}
+
+/** ลิงก์คำศัพท์ในข้อความ: กดแล้วเปิดหน้าคำศัพท์ที่คำนั้น */
+export function TermLink({ id, children }) {
+  const { openGlossary } = useGlossary();
+  return (
+    <button
+      type="button"
+      onClick={() => openGlossary(id)}
+      className="underline decoration-dotted underline-offset-4 text-[#FFCE3E] hover:text-white cursor-pointer"
+    >
+      {children}
+    </button>
   );
 }

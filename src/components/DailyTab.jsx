@@ -10,7 +10,7 @@ import {
 import { formatDegree } from '../utils/ephemeris';
 import { getDailyForecast, shiftDate, thaiToday } from '../utils/daily';
 import { useAiAdvisor } from '../hooks/useAiAdvisor';
-import { AiActionBlock, DignityBadge, ScoreBar, SignPicker, loadSavedSign, saveSign } from './common';
+import { AiActionBlock, DignityBadge, ScoreBar, SignPicker, TermLink, loadSavedSign, saveSign } from './common';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
 
@@ -156,6 +156,10 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
           </div>
         </div>
         <p className="text-base text-[#F5F5F5] leading-[1.7]">{forecast.summary}</p>
+        <p className="text-sm text-[#7D7D7D]">
+          ศัพท์ที่ควรรู้: <TermLink id="moon-transit">จันทร์จร</TermLink> • <TermLink id="house">เรือน</TermLink> •{' '}
+          <TermLink id="area-score">คะแนนรายด้าน</TermLink> • <TermLink id="retrograde">ถอยหลัง</TermLink>
+        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           {forecast.areas.map((a) => (

@@ -4,6 +4,7 @@ import {
   Clock,
   Compass,
   Download,
+  Heart,
   Hash,
   Image as ImageIcon,
   Settings,
@@ -13,6 +14,7 @@ import ZodiacTab from './components/ZodiacTab';
 import NumerologyTab from './components/NumerologyTab';
 import ImageAnalysisTab from './components/ImageAnalysisTab';
 import DailyTab from './components/DailyTab';
+import CompatibilityTab from './components/CompatibilityTab';
 import SettingsModal from './components/SettingsModal';
 import HistoryModal from './components/HistoryModal';
 import {
@@ -27,8 +29,9 @@ import {
 const TABS = [
   { id: 'zodiac', enLabel: '01 / ZODIAC', label: 'เช็กราศี & ดวงชะตา', shortLabel: 'เช็กราศี', icon: Compass },
   { id: 'daily', enLabel: '02 / DAILY', label: 'ดวงรายวัน', shortLabel: 'รายวัน', icon: CalendarDays },
-  { id: 'numerology', enLabel: '03 / NUMEROLOGY', label: 'วิเคราะห์เลขศาสตร์', shortLabel: 'เลขศาสตร์', icon: Hash },
-  { id: 'image', enLabel: '04 / VISION AI', label: 'วิเคราะห์จากภาพคำทำนาย', shortLabel: 'ภาพคำทำนาย', icon: ImageIcon },
+  { id: 'compat', enLabel: '03 / COMPATIBILITY', label: 'ดูคู่ความเข้ากัน', shortLabel: 'ดูคู่', icon: Heart },
+  { id: 'numerology', enLabel: '04 / NUMEROLOGY', label: 'วิเคราะห์เลขศาสตร์', shortLabel: 'เลขศาสตร์', icon: Hash },
+  { id: 'image', enLabel: '05 / VISION AI', label: 'วิเคราะห์จากภาพคำทำนาย', shortLabel: 'ภาพคำทำนาย', icon: ImageIcon },
 ];
 
 function getInitialTab() {
@@ -186,7 +189,7 @@ export default function App() {
         {/* Desktop Sharp Architectural Tab Bar */}
         <nav
           aria-label="เมนูหลัก"
-          className="hidden md:grid grid-cols-4 border border-[#333333] bg-[#181818]"
+          className="hidden md:grid grid-cols-5 border border-[#333333] bg-[#181818]"
         >
           {TABS.map((tab, index) => {
             const Icon = tab.icon;
@@ -196,7 +199,7 @@ export default function App() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-start gap-1 px-6 py-4 text-left transition-colors cursor-pointer ${
+                className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition-colors cursor-pointer ${
                   index > 0 ? 'border-l border-[#333333]' : ''
                 } ${
                   isActive
@@ -243,6 +246,14 @@ export default function App() {
           />
         </section>
 
+        <section className={activeTab === 'compat' ? 'block' : 'hidden'}>
+          <CompatibilityTab
+            settings={settings}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onSaveHistory={handleAddHistory}
+          />
+        </section>
+
         <section className={activeTab === 'numerology' ? 'block' : 'hidden'}>
           <NumerologyTab
             settings={settings}
@@ -273,7 +284,7 @@ export default function App() {
         aria-label="เมนูหลักมือถือ"
         className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-[#333333] bg-black safe-pb"
       >
-        <div className="grid grid-cols-4 max-w-md mx-auto">
+        <div className="grid grid-cols-5 max-w-lg mx-auto">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

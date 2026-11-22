@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   Hash,
+  Heart,
   Image as ImageIcon,
   Sparkles,
   Trash2,
@@ -15,6 +16,7 @@ import LineShareBox from './LineShareBox';
 const CATEGORY_META = {
   zodiac: { label: 'เช็กราศี & ดวงชะตา', icon: Sparkles },
   daily: { label: 'ดวงรายวัน', icon: CalendarDays },
+  compat: { label: 'ดูคู่ความเข้ากัน', icon: Heart },
   numerology: { label: 'วิเคราะห์เลขศาสตร์', icon: Hash },
   image: { label: 'วิเคราะห์ภาพคำทำนาย', icon: ImageIcon },
 };

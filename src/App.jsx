@@ -23,6 +23,7 @@ import {
   addHistoryEntry,
   clearHistory,
   deleteHistoryEntry,
+  importHistory,
   loadHistory,
   loadSettings,
   saveSettings,
@@ -104,6 +105,12 @@ export default function App() {
 
   const handleDeleteHistory = (id) => {
     setHistory(deleteHistoryEntry(id));
+  };
+
+  const handleImportHistory = (text) => {
+    const result = importHistory(text);
+    setHistory(result.history);
+    return result;
   };
 
   const handleClearHistory = () => {
@@ -333,6 +340,7 @@ export default function App() {
         history={history}
         onDelete={handleDeleteHistory}
         onClearAll={handleClearHistory}
+        onImport={handleImportHistory}
       />
     </div>
   );

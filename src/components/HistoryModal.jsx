@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   CalendarDays,
   CalendarRange,
   Clock,
   ChevronDown,
   ChevronUp,
+  Download,
+  Upload,
   Hash,
   Heart,
   Image as ImageIcon,
@@ -13,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import LineShareBox from './LineShareBox';
+import { buildBackup } from '../utils/storage';
 
 const CATEGORY_META = {
   zodiac: { label: 'เช็กราศี & ดวงชะตา', icon: Sparkles },
@@ -38,8 +41,48 @@ function formatThaiDateTime(isoString) {
   }
 }
 
-export default function HistoryModal({ isOpen, onClose, history, onDelete, onClearAll }) {
+function backupFileName(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `astro-advisor-history-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}.json`;
+}
+
+export default function HistoryModal({ isOpen, onClose, history, onDelete, onClearAll, onImport }) {
   const [expandedId, setExpandedId] = useState(null);
+  const [notice, setNotice] = useState(null); // { kind: 'ok' | 'error', text }
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) setNotice(null);
+  }, [isOpen]);
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(buildBackup(history), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = backupFileName();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setNotice({ kind: 'ok', text: `สำรองประวัติ ${history.length} รายการแล้ว (ไฟล์ไม่รวม API Key)` });
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const r = onImport(text);
+      const parts = [`นำเข้าใหม่ ${r.added} รายการ`];
+      if (r.duplicates) parts.push(`ข้ามที่ซ้ำ ${r.duplicates}`);
+      if (r.skipped) parts.push(`ข้ามที่ไม่ถูกต้อง ${r.skipped}`);
+      setNotice({ kind: 'ok', text: parts.join(' • ') });
+    } catch (err) {
+      setNotice({ kind: 'error', text: err.message || 'นำเข้าไม่สำเร็จ' });
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -67,6 +110,32 @@ export default function HistoryModal({ isOpen, onClose, history, onDelete, onCle
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={history.length === 0}
+              className="h-9 px-3 inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#a6a6a6] hover:text-white hover:bg-[#202020] border border-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="สำรองประวัติเป็นไฟล์"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">สำรอง</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-9 px-3 inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#a6a6a6] hover:text-white hover:bg-[#202020] border border-[#333333] transition-colors cursor-pointer"
+              aria-label="นำเข้าประวัติจากไฟล์"
+            >
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">นำเข้า</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
             {history.length > 0 && (
               <button
                 type="button"
@@ -86,6 +155,19 @@ export default function HistoryModal({ isOpen, onClose, history, onDelete, onCle
             </button>
           </div>
         </div>
+
+        {notice && (
+          <div
+            role="status"
+            className={`px-5 py-2.5 text-sm border-b ${
+              notice.kind === 'ok'
+                ? 'bg-[#0d1f15] border-[#1f5c3a] text-[#4ade80]'
+                : 'bg-[#291614] border-[#59302d] text-[#ff8a80]'
+            }`}
+          >
+            {notice.text}
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-black">
           {history.length === 0 ? (

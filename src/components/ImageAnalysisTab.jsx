@@ -9,7 +9,9 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { callGeminiAdvisor, prepareImageForGemini } from '../services/gemini';
+import { calculateZodiacComparison } from '../utils/zodiac';
 import FormattedAnalysis from './FormattedAnalysis';
+import FollowUpChat from './FollowUpChat';
 import LineShareBox from './LineShareBox';
 
 export default function ImageAnalysisTab({
@@ -17,6 +19,7 @@ export default function ImageAnalysisTab({
   onOpenSettings,
   onSaveHistory,
   lastZodiacResult,
+  profiles = [],
 }) {
   const fileInputRef = useRef(null);
   const [imageData, setImageData] = useState(null);
@@ -25,6 +28,7 @@ export default function ImageAnalysisTab({
   const [loadingAI, setLoadingAI] = useState(false);
   const [error, setError] = useState('');
   const [aiResult, setAiResult] = useState(null);
+  const [lastAiPrompt, setLastAiPrompt] = useState('');
 
   const abortRef = useRef(null);
 
@@ -71,6 +75,18 @@ export default function ImageAnalysisTab({
     setUserContext(snippet);
   };
 
+  const handleApplyProfile = (profile) => {
+    const computed = calculateZodiacComparison({
+      day: profile.day,
+      month: profile.month,
+      yearAD: profile.yearAD,
+      birthTime: profile.birthTime || '',
+      birthProvince: profile.birthProvince || '',
+    });
+    const snippet = `โปรไฟล์ "${profile.name}" เกิดวันที่ ${computed.formattedDateTH} (โหราศาสตร์ไทย: ${computed.thaiSign.thName}, โหราศาสตร์สากล: ${computed.westernSign.thName}) ช่วยวิเคราะห์ภาพคำทำนายนี้ให้เหมาะกับดวงชะตา`;
+    setUserContext(snippet);
+  };
+
   const handleAnalyze = async (e) => {
     e.preventDefault();
     if (!imageData) {
@@ -100,6 +116,7 @@ export default function ImageAnalysisTab({
         .filter(Boolean)
         .join('\n');
 
+      setLastAiPrompt(prompt);
       const response = await callGeminiAdvisor({
         apiKey: settings.apiKey,
         model: settings.model,
@@ -211,15 +228,27 @@ export default function ImageAnalysisTab({
             <label className="text-sm text-[#a6a6a6]">
               บริบทเพิ่มเติมหรือราศีของคุณ (ไม่บังคับ)
             </label>
-            {lastZodiacResult && (
-              <button
-                type="button"
-                onClick={handleApplyLastZodiac}
-                className="text-xs px-3 py-1.5 bg-[#202020] hover:bg-[#2e2300] border border-[#494949] hover:border-[#FFC000] text-[#FFCE3E] transition-colors cursor-pointer"
-              >
-                + ดึงข้อมูลราศีล่าสุด ({lastZodiacResult.thaiSign.thName})
-              </button>
-            )}
+            <div className="flex flex-wrap gap-1.5">
+              {profiles.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleApplyProfile(p)}
+                  className="text-xs px-2.5 py-1 bg-black hover:bg-[#2e2300] border border-[#333333] hover:border-[#FFC000] text-[#F5F5F5] hover:text-[#FFC000] transition-colors cursor-pointer"
+                >
+                  + {p.name}
+                </button>
+              ))}
+              {lastZodiacResult && (
+                <button
+                  type="button"
+                  onClick={handleApplyLastZodiac}
+                  className="text-xs px-3 py-1 bg-[#202020] hover:bg-[#2e2300] border border-[#494949] hover:border-[#FFC000] text-[#FFCE3E] transition-colors cursor-pointer"
+                >
+                  + ดึงข้อมูลราศีล่าสุด ({lastZodiacResult.thaiSign.thName})
+                </button>
+              )}
+            </div>
           </div>
           <textarea
             rows={2}
@@ -273,10 +302,18 @@ export default function ImageAnalysisTab({
         <div className="space-y-6">
           <FormattedAnalysis content={aiResult.analysis} model={settings.model} />
           {!aiResult.streaming && (
-          <LineShareBox
-            text={aiResult.lineSummary}
-            title="ข้อความสรุปจากภาพคำทำนาย (พร้อมส่งต่อใน LINE)"
-          />
+            <>
+              <FollowUpChat
+                settings={settings}
+                onOpenSettings={onOpenSettings}
+                baseContext={lastAiPrompt}
+                baseAnalysis={aiResult.analysis}
+              />
+              <LineShareBox
+                text={aiResult.lineSummary}
+                title="ข้อความสรุปจากภาพคำทำนาย (พร้อมส่งต่อใน LINE)"
+              />
+            </>
           )}
         </div>
       )}

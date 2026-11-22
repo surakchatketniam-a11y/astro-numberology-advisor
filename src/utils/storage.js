@@ -1,6 +1,8 @@
 const SETTINGS_KEY = 'astro_advisor_settings_v1';
 const HISTORY_KEY = 'astro_advisor_history_v1';
+const PROFILES_KEY = 'astro_advisor_profiles_v1';
 const MAX_HISTORY_ITEMS = 100;
+const MAX_PROFILES = 12;
 
 export const DEFAULT_SETTINGS = {
   apiKey: '',
@@ -96,6 +98,57 @@ export function clearHistory() {
     // Ignore
   }
   return [];
+}
+
+export function loadProfiles() {
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveProfile(profile) {
+  const current = loadProfiles();
+  const cleanName = (profile.name || '').trim() || 'โปรไฟล์ของฉัน';
+  const entry = {
+    id: profile.id || `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name: cleanName,
+    day: Number(profile.day),
+    month: Number(profile.month),
+    yearAD: Number(profile.yearAD),
+    birthTime: (profile.birthTime || '').trim(),
+    birthProvince: (profile.birthProvince || '').trim(),
+    thaiSignName: profile.thaiSignName || '',
+    westernSignName: profile.westernSignName || '',
+    updatedAt: new Date().toISOString(),
+  };
+
+  const filtered = current.filter(
+    (p) => p.id !== entry.id && p.name.toLowerCase() !== cleanName.toLowerCase()
+  );
+  const next = [entry, ...filtered].slice(0, MAX_PROFILES);
+
+  try {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore
+  }
+  return next;
+}
+
+export function deleteProfile(id) {
+  const current = loadProfiles();
+  const next = current.filter((p) => p.id !== id);
+  try {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore
+  }
+  return next;
 }
 
 // ---------- สำรอง / นำเข้าประวัติ ----------

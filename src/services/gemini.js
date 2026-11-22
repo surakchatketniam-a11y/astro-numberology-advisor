@@ -295,3 +295,64 @@ export async function callGeminiAdvisor({
   }
   return parsed;
 }
+
+/**
+ * ถาม-ตอบต่อเนื่อง (Multi-turn Follow-up Chat) โดยอ้างอิงบริบทบทวิเคราะห์เดิม
+ */
+export async function callGeminiFollowUp({
+  apiKey,
+  model = 'gemini-2.5-flash',
+  baseContext,
+  baseAnalysis,
+  messages = [],
+  question,
+}) {
+  const cleanKey = (apiKey || '').trim();
+  if (!cleanKey) {
+    throw new Error('กรุณากรอก Gemini API Key ในหน้าตั้งค่า (Settings) ก่อนใช้งาน');
+  }
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model
+  )}:generateContent`;
+
+  const contents = [
+    { role: 'user', parts: [{ text: baseContext }] },
+    { role: 'model', parts: [{ text: baseAnalysis }] },
+    ...messages.map((m) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.text }],
+    })),
+    { role: 'user', parts: [{ text: question }] },
+  ];
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': cleanKey,
+    },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }] },
+      contents,
+      generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 2048 },
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throwForHttpError(response.status, data);
+  }
+
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text || '')
+      .join('\n')
+      .trim() || '';
+
+  if (!text) {
+    throw new Error('ไม่พบข้อความตอบกลับจาก Gemini API กรุณาลองใหม่อีกครั้ง');
+  }
+
+  return parseGeminiAdvisorResponse(text);
+}

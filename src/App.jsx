@@ -26,9 +26,12 @@ import {
   addHistoryEntry,
   clearHistory,
   deleteHistoryEntry,
+  deleteProfile,
   importHistory,
   loadHistory,
+  loadProfiles,
   loadSettings,
+  saveProfile,
   saveSettings,
 } from './utils/storage';
 
@@ -57,6 +60,7 @@ function AppShell() {
   const [activeTab, setActiveTab] = useState(getInitialTab);
   const [settings, setSettings] = useState(() => loadSettings());
   const [history, setHistory] = useState(() => loadHistory());
+  const [profiles, setProfiles] = useState(() => loadProfiles());
   const [lastZodiacResult, setLastZodiacResult] = useState(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -119,6 +123,14 @@ function AppShell() {
 
   const handleClearHistory = () => {
     setHistory(clearHistory());
+  };
+
+  const handleSaveProfile = (profile) => {
+    setProfiles(saveProfile(profile));
+  };
+
+  const handleDeleteProfile = (id) => {
+    setProfiles(deleteProfile(id));
   };
 
   return (
@@ -258,6 +270,9 @@ function AppShell() {
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             onZodiacComputed={setLastZodiacResult}
+            profiles={profiles}
+            onSaveProfile={handleSaveProfile}
+            onDeleteProfile={handleDeleteProfile}
           />
         </section>
 
@@ -301,6 +316,7 @@ function AppShell() {
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             lastZodiacResult={lastZodiacResult}
+            profiles={profiles}
           />
         </section>
 

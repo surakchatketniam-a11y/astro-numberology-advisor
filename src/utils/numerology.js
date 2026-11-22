@@ -286,3 +286,113 @@ export function generateNumerologyLineSummary(result) {
     `ข้อแนะนำเชิงจิตวิทยา: ขับขี่อย่างมีสติ ตรวจเช็กความพร้อมของรถสม่ำเสมอ และใช้ความหมายดีๆ ของเลขเป็นกำลังใจในการเดินทาง`,
   ].join('\n');
 }
+
+export const BALANCE_DIMENSIONS = [
+  { key: 'career', label: 'การงานและภาวะผู้นำ', shortLabel: 'การงาน' },
+  { key: 'finance', label: 'การเงินและทรัพย์สิน', shortLabel: 'การเงิน' },
+  { key: 'communication', label: 'การสื่อสารและเจรจา', shortLabel: 'การสื่อสาร' },
+  { key: 'relationship', label: 'ความสัมพันธ์และเสน่ห์', shortLabel: 'ความสัมพันธ์' },
+  { key: 'mindfulness', label: 'สติและการบริหารสมดุล', shortLabel: 'สติ-สมดุล' },
+];
+
+const DIGIT_WEIGHTS = {
+  '0': { career: 4, finance: 3, communication: 5, relationship: 4, mindfulness: 8 },
+  '1': { career: 14, finance: 8, communication: 8, relationship: 6, mindfulness: 8 },
+  '2': { career: 7, finance: 9, communication: 12, relationship: 14, mindfulness: 9 },
+  '3': { career: 13, finance: 9, communication: 8, relationship: 8, mindfulness: 6 },
+  '4': { career: 10, finance: 10, communication: 15, relationship: 10, mindfulness: 10 },
+  '5': { career: 12, finance: 11, communication: 11, relationship: 10, mindfulness: 15 },
+  '6': { career: 8, finance: 15, communication: 10, relationship: 15, mindfulness: 10 },
+  '7': { career: 11, finance: 10, communication: 6, relationship: 6, mindfulness: 11 },
+  '8': { career: 13, finance: 14, communication: 10, relationship: 8, mindfulness: 7 },
+  '9': { career: 11, finance: 10, communication: 12, relationship: 9, mindfulness: 14 },
+};
+
+const PAIR_BONUS = {
+  career: new Set(['15', '51', '19', '91', '35', '53', '78', '87', '89', '98', '39', '93', '14', '41']),
+  finance: new Set(['16', '61', '26', '62', '36', '63', '46', '64', '56', '65', '66', '69', '96', '28', '82', '78', '87']),
+  communication: new Set(['14', '41', '24', '42', '45', '54', '46', '64', '49', '94', '26', '62']),
+  relationship: new Set(['24', '42', '26', '62', '36', '63', '56', '65', '66', '29', '92', '23', '32']),
+  mindfulness: new Set(['15', '51', '45', '54', '55', '56', '65', '59', '95', '49', '94', '79', '97']),
+};
+
+export function computeNumerologyBalance(result) {
+  if (!result) return null;
+
+  const targetDigits = result.type === 'phone' ? result.core7 : result.mainDigits || result.digits;
+  const digitArr = (targetDigits || '').split('').filter((d) => DIGIT_WEIGHTS[d]);
+  const count = Math.max(1, digitArr.length);
+
+  const scores = {
+    career: 45,
+    finance: 45,
+    communication: 45,
+    relationship: 45,
+    mindfulness: 45,
+  };
+
+  for (const key of Object.keys(scores)) {
+    const avgWeight =
+      digitArr.reduce((acc, d) => acc + (DIGIT_WEIGHTS[d]?.[key] || 8), 0) / count;
+    scores[key] = Math.round(35 + avgWeight * 3.1);
+  }
+
+  // Pair harmony adjustments
+  for (const p of result.pairs || []) {
+    for (const key of Object.keys(PAIR_BONUS)) {
+      if (PAIR_BONUS[key].has(p.pair)) {
+        scores[key] += 8;
+      }
+    }
+    if (p.tone === 'balance') {
+      scores.mindfulness += 4; // Remind self-awareness rather than penalizing harshly
+    }
+  }
+
+  // Clamp 35..98 for balanced, realistic visual presentation
+  for (const key of Object.keys(scores)) {
+    scores[key] = Math.max(35, Math.min(98, scores[key]));
+  }
+
+  const overall = Math.round(
+    (scores.career +
+      scores.finance +
+      scores.communication +
+      scores.relationship +
+      scores.mindfulness) /
+      5
+  );
+
+  const topDim = BALANCE_DIMENSIONS.reduce((best, dim) =>
+    scores[dim.key] > scores[best.key] ? dim : best
+  );
+
+  return {
+    scores,
+    overall,
+    topDimension: topDim,
+  };
+}
+
+export function generateCompareLineSummary(resultA, resultB) {
+  if (!resultA || !resultB) return '';
+  const balA = computeNumerologyBalance(resultA);
+  const balB = computeNumerologyBalance(resultB);
+  const typeLabel = resultA.type === 'phone' ? 'เบอร์โทรศัพท์' : 'เลขทะเบียนรถ';
+
+  return [
+    `สรุปเปรียบเทียบเลขศาสตร์${typeLabel} A vs B (Astro & Numerology Advisor)`,
+    ``,
+    `ตัวเลือก A: ${resultA.formatted}`,
+    `ผลรวม: ${resultA.totalSumAll} | คะแนนสมดุลเฉลี่ย: ${balA.overall}/100`,
+    `จุดเด่นหลัก: ${balA.topDimension.label} (${balA.scores[balA.topDimension.key]}/100)`,
+    `คู่เลข: ${resultA.pairs.map((p) => p.pair).join(', ') || '-'}`,
+    ``,
+    `ตัวเลือก B: ${resultB.formatted}`,
+    `ผลรวม: ${resultB.totalSumAll} | คะแนนสมดุลเฉลี่ย: ${balB.overall}/100`,
+    `จุดเด่นหลัก: ${balB.topDimension.label} (${balB.scores[balB.topDimension.key]}/100)`,
+    `คู่เลข: ${resultB.pairs.map((p) => p.pair).join(', ') || '-'}`,
+    ``,
+    `แนวทางตัดสินใจ: เลือกชุดตัวเลขที่สอดคล้องกับเป้าหมายชีวิตหรือสายงานในช่วงนี้มากที่สุด โดยใช้เป็นกำลังใจควบคู่กับการวางแผนลงมือทำจริง`,
+  ].join('\n');
+}

@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
+  BookmarkPlus,
   Calendar,
   Clock,
   Compass,
@@ -7,8 +8,9 @@ import {
   MapPin,
   Scale,
   Sparkles,
-  Square,
   Sun,
+  User,
+  X,
   AlertCircle,
 } from 'lucide-react';
 import {
@@ -17,59 +19,22 @@ import {
   generateZodiacLineSummary,
 } from '../utils/zodiac';
 import { callGeminiAdvisor } from '../services/gemini';
-import { PROVINCE_NAMES } from '../utils/provinces';
-import { formatDegree } from '../utils/ephemeris';
-import { DignityBadge, TermLink } from './common';
-import ProfileBar from './ProfileBar';
+import { calculateThaiAscendant, THAI_PROVINCES } from '../utils/ascendant';
+import { renderZodiacCardPng } from '../utils/shareCard';
 import FormattedAnalysis from './FormattedAnalysis';
-
-function PositionRows({ chart, accent, nodeLabels = ['ราหู', 'เกตุ'] }) {
-  const rows = [
-    ['อาทิตย์', chart.sun],
-    ['จันทร์', chart.moon],
-    ['ลัคนา', chart.asc],
-    [nodeLabels[0], chart.rahu],
-    [nodeLabels[1], chart.ketu],
-  ].filter(([, body]) => body);
-  return (
-    <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
-      {rows.map(([label, body]) => (
-        <div key={label} className="px-4 py-2.5 flex items-center justify-between gap-3">
-          <span className="text-[#7D7D7D]">{label}</span>
-          <span className="text-white font-medium text-right">
-            <span className={accent}>{body.sign.thName}</span> {formatDegree(body.degreeInSign)}
-            {body.uncertain && <span className="text-[#7D7D7D] font-normal"> (โดยประมาณ)</span>}
-            {body.dignity && (
-              <span className="ml-2 align-middle">
-                <DignityBadge dignity={body.dignity} />
-              </span>
-            )}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
+import FollowUpChat from './FollowUpChat';
 import LineShareBox from './LineShareBox';
-
-function positionText(chart) {
-  return [
-    ['อาทิตย์', chart.sun],
-    ['จันทร์', chart.moon],
-    ['ลัคนา', chart.asc],
-    ['ราหู', chart.rahu],
-    ['เกตุ', chart.ketu],
-  ]
-    .filter(([, b]) => b)
-    .map(([label, b]) => `${label}${b.sign.thName} ${formatDegree(b.degreeInSign)}${b.dignity ? ` (${b.dignity.label})` : ''}`)
-    .join(', ');
-}
+import ShareCardButton from './ShareCardButton';
+import ThaiZodiacWheel from './ThaiZodiacWheel';
 
 export default function ZodiacTab({
   settings,
   onOpenSettings,
   onSaveHistory,
   onZodiacComputed,
+  profiles = [],
+  onSaveProfile,
+  onDeleteProfile,
 }) {
   const currentYearAD = new Date().getFullYear();
   const [day, setDay] = useState(15);
@@ -79,10 +44,26 @@ export default function ZodiacTab({
   const [birthProvince, setBirthProvince] = useState('');
   const [focusTopic, setFocusTopic] = useState('');
 
+  const [profileName, setProfileName] = useState('');
+  const [activeProfileId, setActiveProfileId] = useState(null);
+  const [profileSavedNotice, setProfileSavedNotice] = useState(false);
+
   const [result, setResult] = useState(null);
   const [aiResult, setAiResult] = useState(null);
+  const [lastAiPrompt, setLastAiPrompt] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiError, setAiError] = useState('');
+
+  const ascendant = useMemo(() => {
+    if (!result || !result.birthTime) return null;
+    return calculateThaiAscendant({
+      yearAD: result.yearAD,
+      month: result.month,
+      day: result.day,
+      birthTime: result.birthTime,
+      birthProvince: result.birthProvince,
+    });
+  }, [result]);
 
   const years = useMemo(() => {
     const list = [];
@@ -98,8 +79,59 @@ export default function ZodiacTab({
 
   const safeDay = Math.min(day, maxDayInMonth);
 
+  const runCalculation = (params, recordHistory = true) => {
+    const computed = calculateZodiacComparison(params);
+    setResult(computed);
+    setAiResult(null);
+    setAiError('');
+    if (onZodiacComputed) onZodiacComputed(computed);
+
+    if (recordHistory) {
+      const offlineSummary = generateZodiacLineSummary(computed);
+      onSaveHistory({
+        category: 'zodiac',
+        isAI: false,
+        title: `${computed.formattedDateTH} — ไทย: ${computed.thaiSign.thName} / สากล: ${computed.westernSign.thName}`,
+        subtitle: `${computed.dayOfWeek.name} • เลขรหัสชีวิต ${computed.lifePathNumber}`,
+        lineSummary: offlineSummary,
+      });
+    }
+    return computed;
+  };
+
   const handleCalculate = (e) => {
     e.preventDefault();
+    runCalculation({
+      day: safeDay,
+      month,
+      yearAD,
+      birthTime: birthTime.trim(),
+      birthProvince: birthProvince.trim(),
+    });
+  };
+
+  const handleSelectProfile = (profile) => {
+    setActiveProfileId(profile.id);
+    setDay(profile.day);
+    setMonth(profile.month);
+    setYearAD(profile.yearAD);
+    setBirthTime(profile.birthTime || '');
+    setBirthProvince(profile.birthProvince || '');
+    setProfileName(profile.name);
+    runCalculation(
+      {
+        day: profile.day,
+        month: profile.month,
+        yearAD: profile.yearAD,
+        birthTime: profile.birthTime || '',
+        birthProvince: profile.birthProvince || '',
+      },
+      false
+    );
+  };
+
+  const handleSaveCurrentProfile = () => {
+    if (!onSaveProfile) return;
     const computed = calculateZodiacComparison({
       day: safeDay,
       month,
@@ -107,26 +139,21 @@ export default function ZodiacTab({
       birthTime: birthTime.trim(),
       birthProvince: birthProvince.trim(),
     });
-    setResult(computed);
-    setAiResult(null);
-    setAiError('');
-    if (onZodiacComputed) onZodiacComputed(computed);
-
-    const offlineSummary = generateZodiacLineSummary(computed);
-    onSaveHistory({
-      category: 'zodiac',
-      isAI: false,
-      title: `${computed.formattedDateTH} — ไทย: ${computed.thaiSign.thName} / สากล: ${computed.westernSign.thName}`,
-      subtitle: `${computed.dayOfWeek.name} • เลขรหัสชีวิต ${computed.lifePathNumber}`,
-      lineSummary: offlineSummary,
+    const label = profileName.trim() || `โปรไฟล์ ${computed.thaiSign.thName}`;
+    onSaveProfile({
+      name: label,
+      day: safeDay,
+      month,
+      yearAD,
+      birthTime: birthTime.trim(),
+      birthProvince: birthProvince.trim(),
+      thaiSignName: computed.thaiSign.thName,
+      westernSignName: computed.westernSign.thName,
     });
+    setProfileName('');
+    setProfileSavedNotice(true);
+    setTimeout(() => setProfileSavedNotice(false), 2000);
   };
-
-  const abortRef = useRef(null);
-
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  const handleStop = () => abortRef.current?.abort();
 
   const handleDeepAnalyze = async () => {
     if (!result) return;
@@ -135,8 +162,6 @@ export default function ZodiacTab({
       return;
     }
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     setLoadingAI(true);
     setAiError('');
     try {
@@ -146,11 +171,10 @@ export default function ZodiacTab({
         result.birthTime ? `- เวลาเกิด: ${result.birthTime} น.` : `- เวลาเกิด: ไม่ระบุ`,
         result.birthProvince ? `- จังหวัดที่เกิด: ${result.birthProvince}` : `- จังหวัดที่เกิด: ไม่ระบุ`,
         `- โหราศาสตร์ไทย (นิรายนะวิธี): ${result.thaiSign.thName} (${result.thaiSign.element}, ดาวประจำตัว: ${result.thaiSign.thaiRuler})`,
+        ascendant
+          ? `- ลัคนาไทย (Ascendant): ลัคนา${ascendant.ascSign.thName} (${ascendant.degreeInSign}°${String(ascendant.minuteInSign).padStart(2, '0')}') | เรือนการงาน (กัมมะ): ${ascendant.careerHouse.sign.thName} | เรือนการเงิน (กดุมพะ): ${ascendant.wealthHouse.sign.thName}`
+          : '',
         `- โหราศาสตร์สากล (สายนะวิธี): ${result.westernSign.thName} / ${result.westernSign.enName} (${result.westernSign.element}, ดาวประจำตัว: ${result.westernSign.westernRuler})`,
-        `- ตำแหน่งดาวจริง (นิรายนะ Lahiri ${result.ayanamsa.toFixed(2)}°): ${positionText(result.thai)}`,
-        `- ตำแหน่งดาวจริง (สายนะ): ${positionText(result.western)}`,
-        result.thaiAscRuler ? `- ตนุลัคน์ (เจ้าเรือนลัคนาไทย): ${result.thaiAscRuler}` : '',
-        result.notes.length ? `- ข้อจำกัดของข้อมูล: ${result.notes.join(' / ')}` : '',
         `- เลขรหัสชีวิต (Life Path Number): ${result.lifePathNumber}`,
         focusTopic.trim() ? `- ประเด็นที่ผู้ใช้อยากปรึกษาเป็นพิเศษ: ${focusTopic.trim()}` : '',
         ``,
@@ -159,12 +183,11 @@ export default function ZodiacTab({
         .filter(Boolean)
         .join('\n');
 
+      setLastAiPrompt(prompt);
       const response = await callGeminiAdvisor({
         apiKey: settings.apiKey,
         model: settings.model,
         prompt,
-        onPartial: setAiResult,
-        signal: controller.signal,
       });
 
       setAiResult(response);
@@ -177,8 +200,6 @@ export default function ZodiacTab({
         lineSummary: response.lineSummary,
       });
     } catch (err) {
-      setAiResult(null);
-      if (controller.signal.aborted) return; // ผู้ใช้กดหยุดเอง
       setAiError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API');
     } finally {
       setLoadingAI(false);
@@ -189,6 +210,80 @@ export default function ZodiacTab({
 
   return (
     <div className="space-y-6">
+      {/* Saved Profiles Bar */}
+      <div className="lambo-panel p-4 sm:p-5 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-[#FFC000]" />
+            <span className="text-sm font-medium text-white">โปรไฟล์ดวงที่บันทึกไว้</span>
+            <span className="text-xs text-[#7D7D7D]">({profiles.length})</span>
+          </div>
+          {profileSavedNotice && (
+            <span className="text-xs text-[#4ade80]">บันทึกโปรไฟล์เรียบร้อยแล้ว</span>
+          )}
+        </div>
+
+        {profiles.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {profiles.map((p) => {
+              const isSelected = activeProfileId === p.id;
+              return (
+                <div
+                  key={p.id}
+                  className={`inline-flex items-center border transition-colors ${
+                    isSelected
+                      ? 'bg-[#2e2300] border-[#FFC000] text-[#FFC000]'
+                      : 'bg-black border-[#333333] text-[#F5F5F5] hover:border-[#707070]'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSelectProfile(p)}
+                    className="px-3 py-1.5 text-sm cursor-pointer flex items-center gap-2"
+                  >
+                    <span className="font-medium">{p.name}</span>
+                    {p.thaiSignName && (
+                      <span className="text-xs text-[#7D7D7D]">{p.thaiSignName}</span>
+                    )}
+                  </button>
+                  {onDeleteProfile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeProfileId === p.id) setActiveProfileId(null);
+                        onDeleteProfile(p.id);
+                      }}
+                      className="px-2 py-1.5 border-l border-[#333333] text-[#7D7D7D] hover:text-[#ff8a80] cursor-pointer"
+                      aria-label={`ลบโปรไฟล์ ${p.name}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+          <input
+            type="text"
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+            placeholder="ตั้งชื่อโปรไฟล์เพื่อบันทึกข้อมูลเกิดด้านล่าง เช่น ของฉัน, แฟน, คุณแม่"
+            className="lambo-input flex-1 text-sm min-h-[42px] py-2"
+          />
+          <button
+            type="button"
+            onClick={handleSaveCurrentProfile}
+            className="lambo-btn-ghost px-4 min-h-[42px] text-sm flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <BookmarkPlus className="h-4 w-4 text-[#FFC000]" />
+            <span>บันทึกโปรไฟล์</span>
+          </button>
+        </div>
+      </div>
+
       {/* Input Panel */}
       <form onSubmit={handleCalculate} className="lambo-panel p-5 sm:p-8 space-y-6">
         <div className="border-b border-[#333333] pb-4">
@@ -200,20 +295,9 @@ export default function ZodiacTab({
             เปรียบเทียบราศีไทยและสากล
           </h2>
           <p className="text-sm sm:text-base text-[#7D7D7D] mt-1">
-            คำนวณจากตำแหน่งดาวจริงแบบออฟไลน์ เทียบโหราศาสตร์ไทย (นิรายนะ Lahiri) กับสากล (สายนะ)
+            คำนวณทันทีแบบออฟไลน์ เทียบโหราศาสตร์ไทย (กลางเดือน) กับสากล (19–23 ของเดือน)
           </p>
         </div>
-
-        <ProfileBar
-          current={{ day: safeDay, month, yearAD, birthTime, birthProvince }}
-          onPick={(p) => {
-            setDay(p.day);
-            setMonth(p.month);
-            setYearAD(p.yearAD);
-            setBirthTime(p.birthTime);
-            setBirthProvince(p.birthProvince);
-          }}
-        />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -268,7 +352,7 @@ export default function ZodiacTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div>
             <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-[#7D7D7D]" /> เวลาเกิด (ไม่บังคับ — ใช้คำนวณจันทร์และลัคนา)
+              <Clock className="h-4 w-4 text-[#7D7D7D]" /> เวลาเกิด (ไม่บังคับ — เสริมวิเคราะห์ AI)
             </label>
             <input
               type="time"
@@ -280,19 +364,19 @@ export default function ZodiacTab({
 
           <div>
             <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-[#7D7D7D]" /> จังหวัดที่เกิด (ไม่บังคับ — ใช้คำนวณลัคนา)
+              <MapPin className="h-4 w-4 text-[#7D7D7D]" /> จังหวัดที่เกิด (ไม่บังคับ)
             </label>
             <input
               type="text"
+              list="thai-provinces-list"
               value={birthProvince}
               onChange={(e) => setBirthProvince(e.target.value)}
               placeholder="เช่น กรุงเทพมหานคร, เชียงใหม่"
-              list="th-province-list"
               className="lambo-input"
             />
-            <datalist id="th-province-list">
-              {PROVINCE_NAMES.map((n) => (
-                <option key={n} value={n} />
+            <datalist id="thai-provinces-list">
+              {THAI_PROVINCES.map((p) => (
+                <option key={p.name} value={p.name} />
               ))}
             </datalist>
           </div>
@@ -339,7 +423,7 @@ export default function ZodiacTab({
                     {result.thaiSign.thName}
                   </h3>
                   <p className="text-sm text-[#7D7D7D] mt-0.5">
-                    ช่วงวันที่โดยประมาณ: {result.thaiSign.thaiRange}
+                    ช่วงวันที่: {result.thaiSign.thaiRange}
                   </p>
                 </div>
                 <span className="lambo-badge bg-black border border-[#494949] text-[#FFCE3E]">
@@ -347,19 +431,9 @@ export default function ZodiacTab({
                 </span>
               </div>
 
-              <PositionRows chart={result.thai} accent="text-[#FFCE3E]" />
-
-              <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
-                <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-                  <span className="text-[#7D7D7D]">ดาวประจำราศีเกิด</span>
-                  <span className="text-white font-medium">{result.thaiSign.thaiRuler}</span>
-                </div>
-                {result.thaiAscRuler && (
-                  <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-                    <span className="text-[#7D7D7D]">ตนุลัคน์ (เจ้าเรือนลัคนา)</span>
-                    <span className="text-white font-medium">{result.thaiAscRuler}</span>
-                  </div>
-                )}
+              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
+                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
+                <span className="text-white font-medium">{result.thaiSign.thaiRuler}</span>
               </div>
 
               <div className="space-y-3 text-base leading-[1.7]">
@@ -385,7 +459,7 @@ export default function ZodiacTab({
                     {result.westernSign.thName} ({result.westernSign.enName})
                   </h3>
                   <p className="text-sm text-[#7D7D7D] mt-0.5">
-                    ช่วงวันที่โดยประมาณ: {result.westernSign.westernRange}
+                    ช่วงวันที่: {result.westernSign.westernRange}
                   </p>
                 </div>
                 <span className="lambo-badge bg-black border border-[#494949] text-[#29ABE2]">
@@ -393,19 +467,9 @@ export default function ZodiacTab({
                 </span>
               </div>
 
-              <PositionRows chart={result.western} accent="text-[#29ABE2]" nodeLabels={['โหนดเหนือ (ราหู)', 'โหนดใต้ (เกตุ)']} />
-
-              <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
-                <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-                  <span className="text-[#7D7D7D]">ดาวประจำราศีเกิด</span>
-                  <span className="text-white font-medium">{result.westernSign.westernRuler}</span>
-                </div>
-                {result.westernAscRuler && (
-                  <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-                    <span className="text-[#7D7D7D]">ดาวประจำลัคนา</span>
-                    <span className="text-white font-medium">{result.westernAscRuler}</span>
-                  </div>
-                )}
+              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
+                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
+                <span className="text-white font-medium">{result.westernSign.westernRuler}</span>
               </div>
 
               <div className="space-y-3 text-base leading-[1.7]">
@@ -431,18 +495,27 @@ export default function ZodiacTab({
                   : 'มุมมองเปรียบเทียบ 2 ระบบ (ไทย vs สากล)'}
               </p>
               <p className="text-[#a6a6a6]">{result.comparisonNote}</p>
-              <p className="text-sm text-[#7D7D7D] mt-2">
-                ศัพท์ที่ควรรู้: <TermLink id="sidereal">นิรายนะ</TermLink> •{' '}
-                <TermLink id="tropical">สายนะ</TermLink> • <TermLink id="ayanamsa">อายนางศะ</TermLink> •{' '}
-                <TermLink id="ascendant">ลัคนา</TermLink> • <TermLink id="moon-sign">ราศีจันทร์</TermLink>
-              </p>
-              {result.notes.map((note) => (
-                <p key={note} className="text-sm text-[#7D7D7D] mt-2">
-                  * {note}
-                </p>
-              ))}
             </div>
           </div>
+
+          {/* Thai Ascendant & 12-House Wheel */}
+          {ascendant ? (
+            <ThaiZodiacWheel ascendant={ascendant} sunSignId={result.thaiSign.id} />
+          ) : (
+            <div className="lambo-inset p-4 flex flex-wrap items-center justify-between gap-2 text-sm text-[#a6a6a6]">
+              <span>
+                ต้องการดู <strong className="text-white">ลัคนาไทยและผังจักรราศี 12 เรือน (SVG)</strong>?
+                กรอก <strong className="text-[#FFC000]">เวลาเกิด</strong> ด้านบนแล้วกดคำนวณอีกครั้ง
+              </span>
+            </div>
+          )}
+
+          {/* Shareable PNG Card Export */}
+          <ShareCardButton
+            onGenerateDataUrl={() => renderZodiacCardPng(result)}
+            fileName={`zodiac-${result.thaiSign.id}-${result.westernSign.id}.png`}
+            label="บันทึกการ์ดภาพสรุปผลราศี (PNG)"
+          />
 
           {/* Deep AI Analysis Trigger */}
           <div className="lambo-panel p-5 sm:p-6 space-y-4">
@@ -482,16 +555,6 @@ export default function ZodiacTab({
                 </>
               )}
             </button>
-            {loadingAI && (
-              <button
-                type="button"
-                onClick={handleStop}
-                className="lambo-btn-ghost w-full px-5 py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Square className="h-3.5 w-3.5 text-[#ff8a80]" />
-                หยุดการวิเคราะห์
-              </button>
-            )}
 
             {aiError && (
               <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">
@@ -501,16 +564,24 @@ export default function ZodiacTab({
             )}
           </div>
 
-          {/* AI Analysis Output */}
+          {/* AI Analysis Output & Follow-up Chat */}
           {aiResult && (
-            <FormattedAnalysis content={aiResult.analysis} model={settings.model} />
+            <>
+              <FormattedAnalysis content={aiResult.analysis} model={settings.model} />
+              <FollowUpChat
+                settings={settings}
+                onOpenSettings={onOpenSettings}
+                baseContext={lastAiPrompt}
+                baseAnalysis={aiResult.analysis}
+              />
+            </>
           )}
 
           {/* LINE Share Box */}
           <LineShareBox
-            text={aiResult && !aiResult.streaming ? aiResult.lineSummary : offlineLineSummary}
+            text={aiResult ? aiResult.lineSummary : offlineLineSummary}
             title={
-              aiResult && !aiResult.streaming
+              aiResult
                 ? 'ข้อความสรุปจาก AI สำหรับส่งต่อใน LINE'
                 : 'ข้อความสรุปผลเบื้องต้นสำหรับส่งต่อใน LINE'
             }

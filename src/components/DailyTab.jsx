@@ -1,61 +1,24 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Moon,
   Palette,
-  Sparkles,
-  Square,
 } from 'lucide-react';
-import { ZODIAC_DATA } from '../utils/zodiac';
-import { SIGN_IDS, formatDegree } from '../utils/ephemeris';
+import { formatDegree } from '../utils/ephemeris';
 import { getDailyForecast, shiftDate, thaiToday } from '../utils/daily';
-import { callGeminiAdvisor } from '../services/gemini';
+import { useAiAdvisor } from '../hooks/useAiAdvisor';
+import { AiActionBlock, ScoreBar, SignPicker, loadSavedSign, saveSign } from './common';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
-
-const SIGN_KEY = 'astro_advisor_daily_sign_v1';
-
-function loadSavedSign() {
-  try {
-    const v = localStorage.getItem(SIGN_KEY);
-    return SIGN_IDS.includes(v) ? v : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSign(id) {
-  try {
-    localStorage.setItem(SIGN_KEY, id);
-  } catch {
-    // ignore
-  }
-}
-
-function ScoreBar({ score }) {
-  return (
-    <div className="flex gap-1" role="img" aria-label={`คะแนน ${score} จาก 5`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={`h-2 w-6 ${n <= score ? 'bg-[#FFC000]' : 'bg-[#333333]'}`} />
-      ))}
-    </div>
-  );
-}
 
 export default function DailyTab({ settings, onOpenSettings, onSaveHistory, lastZodiacResult }) {
   const [signId, setSignId] = useState(() => loadSavedSign() || 'aries');
   const [hasChosen, setHasChosen] = useState(() => Boolean(loadSavedSign()));
   const [date, setDate] = useState(() => thaiToday());
-  const [aiResult, setAiResult] = useState(null);
-  const [loadingAI, setLoadingAI] = useState(false);
-  const [aiError, setAiError] = useState('');
-  const abortRef = useRef(null);
-
-  useEffect(() => () => abortRef.current?.abort(), []);
+  const ai = useAiAdvisor({ settings, onOpenSettings });
 
   // ถ้ายังไม่เคยเลือกราศี ให้ใช้ราศีไทยจากผลเช็กราศีล่าสุด
   useEffect(() => {
@@ -76,49 +39,29 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
     setSignId(id);
     setHasChosen(true);
     saveSign(id);
-    setAiResult(null);
-    setAiError('');
+    ai.reset();
   };
 
   const changeDate = (next) => {
     setDate(next);
-    setAiResult(null);
-    setAiError('');
+    ai.reset();
   };
 
-  const handleStop = () => abortRef.current?.abort();
-
   const handleDeepAnalyze = async () => {
-    if (!settings.apiKey) {
-      onOpenSettings();
-      return;
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoadingAI(true);
-    setAiError('');
-    try {
-      const f = forecast;
-      const prompt = [
-        `กรุณาให้คำแนะนำดวงรายวันเชิงจิตวิทยาและการวางแผนวัน สำหรับผู้ที่มีราศีกำเนิดแบบไทย: ${f.sign.thName}`,
-        `- วันที่: ${f.dateLabel} (${f.dayOfWeek.name})`,
-        `- จันทร์จรอยู่${f.moon.sign.thName} ${formatDegree(f.moon.degreeInSign)} (เรือนที่ ${f.moon.house} นับจากราศีกำเนิด: ${f.headline})`,
-        `- อาทิตย์จรอยู่${f.sun.sign.thName}`,
-        `- ดาวจรอื่นๆ: ${f.planets
-          .map((p) => `${p.label}${p.sign.thName} เรือน ${p.house}${p.retrograde ? ' (ถอยหลัง)' : ''}`)
-          .join(', ')}`,
-        `- คะแนนเบื้องต้นรายด้าน: ${f.areas.map((a) => `${a.label} ${a.score}/5`).join(', ')}`,
-        `ขอให้อธิบายภาพรวมของวัน เปรียบเทียบมุมมองโหราศาสตร์ไทยกับสากลสั้นๆ เชื่อมโยงกับการจัดการอารมณ์และการบริหารความเสี่ยง พร้อมแนวทางปฏิบัติ 3-5 ข้อ และสรุปสำหรับส่งต่อใน LINE`,
-      ].join('\n');
-
-      const response = await callGeminiAdvisor({
-        apiKey: settings.apiKey,
-        model: settings.model,
-        prompt,
-        onPartial: setAiResult,
-        signal: controller.signal,
-      });
-      setAiResult(response);
+    const f = forecast;
+    const prompt = [
+      `กรุณาให้คำแนะนำดวงรายวันเชิงจิตวิทยาและการวางแผนวัน สำหรับผู้ที่มีราศีกำเนิดแบบไทย: ${f.sign.thName}`,
+      `- วันที่: ${f.dateLabel} (${f.dayOfWeek.name})`,
+      `- จันทร์จรอยู่${f.moon.sign.thName} ${formatDegree(f.moon.degreeInSign)} (เรือนที่ ${f.moon.house} นับจากราศีกำเนิด: ${f.headline})`,
+      `- อาทิตย์จรอยู่${f.sun.sign.thName}`,
+      `- ดาวจรอื่นๆ: ${f.planets
+        .map((p) => `${p.label}${p.sign.thName} เรือน ${p.house}${p.retrograde ? ' (ถอยหลัง)' : ''}`)
+        .join(', ')}`,
+      `- คะแนนเบื้องต้นรายด้าน: ${f.areas.map((a) => `${a.label} ${a.score}/5`).join(', ')}`,
+      `ขอให้อธิบายภาพรวมของวัน เปรียบเทียบมุมมองโหราศาสตร์ไทยกับสากลสั้นๆ เชื่อมโยงกับการจัดการอารมณ์และการบริหารความเสี่ยง พร้อมแนวทางปฏิบัติ 3-5 ข้อ และสรุปสำหรับส่งต่อใน LINE`,
+    ].join('\n');
+    const response = await ai.run(prompt);
+    if (response) {
       onSaveHistory({
         category: 'daily',
         isAI: true,
@@ -127,16 +70,10 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
         analysis: response.analysis,
         lineSummary: response.lineSummary,
       });
-    } catch (err) {
-      setAiResult(null);
-      if (controller.signal.aborted) return;
-      setAiError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API');
-    } finally {
-      setLoadingAI(false);
     }
   };
 
-  const showAiSummary = aiResult && !aiResult.streaming;
+  const showAiSummary = ai.aiResult && !ai.aiResult.streaming;
 
   return (
     <div className="space-y-6">
@@ -154,31 +91,11 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
           </p>
         </div>
 
-        <div>
-          <p className="text-sm text-[#a6a6a6] mb-2">
-            ราศีกำเนิด (ไทย)
-            {!hasChosen && lastZodiacResult && (
-              <span className="text-[#7D7D7D]"> — ใช้จากผลเช็กราศีล่าสุด</span>
-            )}
-          </p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-            {SIGN_IDS.map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => changeSign(id)}
-                aria-pressed={signId === id}
-                className={`px-2 py-2.5 text-sm border transition-colors cursor-pointer ${
-                  signId === id
-                    ? 'bg-[#2e2300] border-[#FFC000] text-[#FFC000]'
-                    : 'bg-[#181818] border-[#333333] text-[#a6a6a6] hover:border-[#494949] hover:text-white'
-                }`}
-              >
-                {ZODIAC_DATA[id].thName.replace('ราศี', '')}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SignPicker
+          signId={signId}
+          onChange={changeSign}
+          note={!hasChosen && lastZodiacResult ? 'ใช้จากผลเช็กราศีล่าสุด' : null}
+        />
 
         <div className="flex items-center justify-between gap-2 border border-[#333333] bg-[#181818]">
           <button
@@ -314,51 +231,20 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
         </div>
       </div>
 
-      <div className="lambo-panel p-5 sm:p-6 space-y-4">
-        <button
-          type="button"
-          onClick={handleDeepAnalyze}
-          disabled={loadingAI}
-          className="lambo-btn-ghost w-full px-5 py-3.5 text-base font-medium flex items-center justify-center gap-2 cursor-pointer"
-        >
-          {loadingAI ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              กำลังวิเคราะห์ดวงรายวันด้วย {settings.model}...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 text-[#FFC000]" />
-              {settings.apiKey
-                ? `ขอคำแนะนำเชิงลึกด้วย AI (${settings.model})`
-                : 'ตั้งค่า Gemini API Key เพื่อขอคำแนะนำเชิงลึก'}
-            </>
-          )}
-        </button>
+      <AiActionBlock
+        settings={settings}
+        loadingAI={ai.loadingAI}
+        aiError={ai.aiError}
+        onRun={handleDeepAnalyze}
+        onStop={ai.stop}
+        runLabel="ขอคำแนะนำเชิงลึกด้วย AI"
+        loadingLabel="กำลังวิเคราะห์ดวงรายวันด้วย"
+      />
 
-        {loadingAI && (
-          <button
-            type="button"
-            onClick={handleStop}
-            className="lambo-btn-ghost w-full px-5 py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Square className="h-3.5 w-3.5 text-[#ff8a80]" />
-            หยุดการวิเคราะห์
-          </button>
-        )}
-
-        {aiError && (
-          <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>{aiError}</span>
-          </div>
-        )}
-      </div>
-
-      {aiResult && <FormattedAnalysis content={aiResult.analysis} model={settings.model} />}
+      {ai.aiResult && <FormattedAnalysis content={ai.aiResult.analysis} model={settings.model} />}
 
       <LineShareBox
-        text={showAiSummary ? aiResult.lineSummary : forecast.lineSummary}
+        text={showAiSummary ? ai.aiResult.lineSummary : forecast.lineSummary}
         title={
           showAiSummary
             ? 'ข้อความสรุปดวงรายวันจาก AI สำหรับส่งต่อใน LINE'

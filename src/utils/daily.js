@@ -17,9 +17,9 @@ export const AREAS = [
 ];
 
 // ตำราดาวจร: จันทร์ส่งผลดีเมื่ออยู่เรือนที่ 1,3,6,7,10,11 นับจากราศีกำเนิด
-const MOON_FAVORABLE = [1, 3, 6, 7, 10, 11];
-const JUPITER_FAVORABLE = [1, 2, 5, 7, 9, 11];
-const SATURN_FAVORABLE = [3, 6, 11];
+export const MOON_FAVORABLE = [1, 3, 6, 7, 10, 11];
+export const JUPITER_FAVORABLE = [1, 2, 5, 7, 9, 11];
+export const SATURN_FAVORABLE = [3, 6, 11];
 
 export const HOUSE_THEMES = {
   1: { theme: 'ตัวตนและสุขภาพ', text: 'จังหวะกลับมาโฟกัสที่ตัวเอง อารมณ์ไวขึ้นเล็กน้อย เหมาะกับการดูแลร่างกายและตั้งเป้าหมายของวันให้ชัด', tip: 'เริ่มวันด้วยการจดสิ่งสำคัญ 3 ข้อที่อยากทำให้เสร็จ' },
@@ -36,7 +36,7 @@ export const HOUSE_THEMES = {
   12: { theme: 'การพักผ่อนและปล่อยวาง', text: 'พลังงานลดลงเล็กน้อย เหมาะกับการพักใจ ทบทวนตัวเอง และลดภาระที่ไม่จำเป็น', tip: 'เว้นเวลาเงียบๆ ให้ตัวเอง และเลี่ยงการใช้จ่ายหรือรับปากเกินกำลัง' },
 };
 
-const AREA_TEXT = {
+export const AREA_TEXT = {
   work: {
     low: 'งานอาจเดินช้าหรือมีเรื่องแทรก เหมาะกับการทำงานเป็นขั้นตอนและเผื่อเวลา',
     mid: 'งานเดินไปตามปกติ รักษาจังหวะและโฟกัสเรื่องสำคัญ',
@@ -59,7 +59,7 @@ const AREA_TEXT = {
   },
 };
 
-const DAY_MS = 86400000;
+export const DAY_MS = 86400000;
 
 export function houseFrom(natalSignIndex, signIndex) {
   return ((signIndex - natalSignIndex + 12) % 12) + 1;
@@ -76,7 +76,7 @@ export function scoreArea(area, { moonHouse, jupiterHouse, saturnHouse }) {
   return Math.max(1, Math.min(5, Math.round(score)));
 }
 
-function tier(score) {
+export function tier(score) {
   if (score <= 2) return 'low';
   if (score >= 4) return 'high';
   return 'mid';

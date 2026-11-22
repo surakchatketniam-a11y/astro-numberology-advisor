@@ -157,3 +157,19 @@ export function siderealMoonSun(date) {
   const ay = lahiriAyanamsa(date);
   return { sun: describe(trop.sun - ay), moon: describe(trop.moon - ay) };
 }
+
+/** ดวงจันทร์ดับ (new) และจันทร์เพ็ญ (full) ในช่วงเวลาที่กำหนด */
+export function moonPhasesInRange(start, days) {
+  const end = start.getTime() + days * 86400000;
+  const out = [];
+  for (const [type, lon] of [['new', 0], ['full', 180]]) {
+    let from = start;
+    for (let i = 0; i < 3; i++) {
+      const t = Astronomy.SearchMoonPhase(lon, from, days);
+      if (!t || t.date.getTime() >= end) break;
+      out.push({ type, date: t.date });
+      from = new Date(t.date.getTime() + 86400000);
+    }
+  }
+  return out.sort((a, b) => a.date - b.date);
+}

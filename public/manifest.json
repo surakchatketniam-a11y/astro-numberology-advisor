@@ -50,6 +50,12 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
+      "name": "ดวงรายเดือน",
+      "short_name": "รายเดือน",
+      "url": "/?tab=monthly",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "ดูคู่ความเข้ากัน",
       "short_name": "ดูคู่",
       "url": "/?tab=compat",

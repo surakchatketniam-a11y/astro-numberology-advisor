@@ -214,3 +214,20 @@ describe('dignity in the natal chart (29 Oct 1977)', () => {
     expect(generateZodiacLineSummary(r)).toContain('[มหาอุจจ์]');
   });
 });
+
+describe('เกษตรของราหู/เกตุ ในดวงกำเนิด', () => {
+  it('Rahu in Aquarius (mid-2026) is own for the Thai chart only', () => {
+    const r = calculateZodiacComparison({ day: 1, month: 6, yearAD: 2026, birthTime: '12:00' });
+    expect(r.thai.rahu.sign.id).toBe('aquarius');
+    expect(r.thai.rahu.dignity).toMatchObject({ type: 'own' });
+    expect(r.western.rahu.dignity).toBeNull();
+  });
+  it('Ketu in Scorpio (Rahu in Taurus, 2003) is own for the Thai chart', () => {
+    const r = calculateZodiacComparison({ day: 1, month: 1, yearAD: 2003, birthTime: '12:00' });
+    expect(r.thai.rahu.sign.id).toBe('taurus');
+    expect(r.thai.ketu.sign.id).toBe('scorpio');
+    expect(r.thai.ketu.dignity).toMatchObject({ type: 'own' });
+    expect(generateZodiacLineSummary(r)).toContain('เกตุ: ราศีพิจิก');
+    expect(generateZodiacLineSummary(r)).toContain('[เกษตร]');
+  });
+});

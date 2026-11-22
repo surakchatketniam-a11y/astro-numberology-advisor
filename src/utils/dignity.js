@@ -10,8 +10,10 @@ const EXALTATION = {
   saturn: ['libra', 20],
 };
 
-// เกษตร: ราศีที่ดาวเป็นเจ้าเรือน (ราหู/เกตุไม่รวม เพราะตำราไม่ตรงกัน)
-const OWN_SIGNS = {
+// เกษตร: ราศีที่ดาวเป็นเจ้าเรือน
+// ราหู/เกตุ: ใช้ตามที่นิยมในตำราไทยและอินเดียสมัยใหม่ คือราหูเป็นเจ้าเรือนร่วมของกุมภ์ และเกตุเป็นเจ้าเรือนร่วมของพิจิก
+// (ตำราบางสายกำหนดต่างกัน และไม่มีสถานะอุจจ์/นิจให้ปม เพราะตำราไม่ตรงกัน)
+export const OWN_SIGNS = {
   sun: ['leo'],
   moon: ['cancer'],
   mars: ['aries', 'scorpio'],
@@ -19,6 +21,8 @@ const OWN_SIGNS = {
   jupiter: ['sagittarius', 'pisces'],
   venus: ['taurus', 'libra'],
   saturn: ['capricorn', 'aquarius'],
+  rahu: ['aquarius'],
+  ketu: ['scorpio'],
 };
 
 const SIGN_ORDER = [
@@ -46,21 +50,27 @@ export function oppositeSign(signId) {
 }
 
 /**
- * @param bodyKey sun|moon|mars|mercury|jupiter|venus|saturn
+ * @param bodyKey sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu
  * @returns null หรือ { type: 'exalt'|'debil'|'own', great, own, label, text }
  */
 export function getDignity(bodyKey, signId, degreeInSign) {
   const entry = EXALTATION[bodyKey];
-  if (!entry) return null;
-  const [exaltSign, exactDeg] = entry;
   const own = (OWN_SIGNS[bodyKey] || []).includes(signId);
+  const [exaltSign, exactDeg] = entry || [null, 0];
   let type = null;
-  if (signId === exaltSign) type = 'exalt';
-  else if (signId === oppositeSign(exaltSign)) type = 'debil';
+  if (entry && signId === exaltSign) type = 'exalt';
+  else if (entry && signId === oppositeSign(exaltSign)) type = 'debil';
   else if (own) type = 'own';
   if (!type) return null;
   if (type === 'own') {
-    return { type, great: false, own: true, label: 'เกษตร', text: DIGNITY_TEXT.own };
+    const isNode = bodyKey === 'rahu' || bodyKey === 'ketu';
+    return {
+      type,
+      great: false,
+      own: true,
+      label: 'เกษตร',
+      text: isNode ? `${DIGNITY_TEXT.own} (ตามตำราที่ถือว่าปมจันทร์เป็นเจ้าเรือนร่วม)` : DIGNITY_TEXT.own,
+    };
   }
   const great = Math.abs(degreeInSign - exactDeg) <= GREAT_ORB;
   const label = type === 'exalt' ? (great ? 'มหาอุจจ์' : 'อุจจ์') : great ? 'มหานิจ' : 'นิจ';

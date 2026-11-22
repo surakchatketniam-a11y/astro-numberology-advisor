@@ -75,3 +75,17 @@ describe('เกษตร (own sign)', () => {
     expect(dignitySignWord('debil')).toBe('ราศีนิจ');
   });
 });
+
+describe('เกษตรของราหู/เกตุ', () => {
+  it('Rahu is own in Aquarius and Ketu is own in Scorpio, nowhere else, with no exalt/debil', () => {
+    expect(getDignity('rahu', 'aquarius', 5)).toMatchObject({ type: 'own', label: 'เกษตร' });
+    expect(getDignity('ketu', 'scorpio', 5)).toMatchObject({ type: 'own', label: 'เกษตร' });
+    expect(getDignity('rahu', 'scorpio', 5)).toBeNull();
+    expect(getDignity('ketu', 'aquarius', 5)).toBeNull();
+    expect(getDignity('rahu', 'taurus', 5)).toBeNull();
+    expect(getDignity('ketu', 'virgo', 5)).toBeNull();
+  });
+  it('explains the tradition caveat', () => {
+    expect(getDignity('rahu', 'aquarius', 5).text).toContain('เจ้าเรือนร่วม');
+  });
+});

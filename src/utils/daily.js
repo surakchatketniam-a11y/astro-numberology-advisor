@@ -123,7 +123,7 @@ export function getDailyForecast({ signId, year, month, day }) {
       house: houseFrom(natalIndex, n.signIndex),
       retrograde: false,
       node: true,
-      dignity: null,
+      dignity: getDignity(key, n.signId, n.degreeInSign),
     });
   }
   const jupiterHouse = planetRows.find((r) => r.key === 'jupiter').house;

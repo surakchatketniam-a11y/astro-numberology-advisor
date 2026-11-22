@@ -110,3 +110,13 @@ describe('dignity in transits', () => {
     expect(f.sun.dignity).toBeNull();
   });
 });
+
+describe('node dignity in transits', () => {
+  it('Rahu in Aquarius is own in the daily rows and notes (June 2026)', () => {
+    const f = getDailyForecast({ signId: 'aries', year: 2026, month: 6, day: 1 });
+    const rahu = f.planets.find((p) => p.key === 'rahu');
+    expect(rahu.sign.id).toBe('aquarius');
+    expect(rahu.dignity).toMatchObject({ type: 'own' });
+    expect(f.dignityNotes.join(' ')).toContain('ราหูอยู่ราศีกุมภ์ (เกษตร)');
+  });
+});

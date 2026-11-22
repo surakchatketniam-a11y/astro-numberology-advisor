@@ -290,11 +290,15 @@ export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', 
     sun: describeBody(chart.sidereal.sun, chart.uncertain.sun, 'sun'),
     moon: describeBody(chart.sidereal.moon, chart.uncertain.moon, 'moon'),
     asc: describeBody(chart.sidereal.asc),
+    rahu: describeBody(chart.sidereal.rahu),
+    ketu: describeBody(chart.sidereal.ketu),
   };
   const western = {
     sun: describeBody(chart.tropical.sun, chart.uncertain.sun, 'sun'),
     moon: describeBody(chart.tropical.moon, chart.uncertain.moon, 'moon'),
     asc: describeBody(chart.tropical.asc),
+    rahu: describeBody(chart.tropical.rahu),
+    ketu: describeBody(chart.tropical.ketu),
   };
 
   const thaiSign = thai.sun.sign;
@@ -368,6 +372,8 @@ export function generateZodiacLineSummary(result) {
     bodyLine('อาทิตย์', result.thai.sun),
     bodyLine('จันทร์', result.thai.moon),
     bodyLine('ลัคนา', result.thai.asc),
+    bodyLine('ราหู', result.thai.rahu),
+    bodyLine('เกตุ', result.thai.ketu),
     `ดาวประจำราศีเกิด: ${result.thaiSign.thaiRuler}`,
     result.thaiAscRuler ? `ตนุลัคน์ (เจ้าเรือนลัคนา): ${result.thaiAscRuler}` : null,
     `จุดเด่น: ${result.thaiSign.psychology}`,
@@ -376,6 +382,8 @@ export function generateZodiacLineSummary(result) {
     bodyLine('อาทิตย์', result.western.sun),
     bodyLine('จันทร์', result.western.moon),
     bodyLine('ลัคนา', result.western.asc),
+    bodyLine('โหนดเหนือ (ราหู)', result.western.rahu),
+    bodyLine('โหนดใต้ (เกตุ)', result.western.ketu),
     `ดาวประจำราศีเกิด: ${result.westernSign.westernRuler}`,
     result.westernAscRuler ? `ดาวประจำลัคนา: ${result.westernAscRuler}` : null,
     `จุดเด่น: ${result.westernSign.psychology}`,

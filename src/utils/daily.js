@@ -1,4 +1,4 @@
-import { SIGN_IDS, siderealMoonSun, siderealPlanets, thaiLocalToDate, formatDegree } from './ephemeris';
+import { SIGN_IDS, siderealMoonSun, siderealNodes, siderealPlanets, thaiLocalToDate, formatDegree } from './ephemeris';
 import { THAI_DAYS, THAI_MONTHS, ZODIAC_DATA } from './zodiac';
 import { getDignity } from './dignity';
 
@@ -8,6 +8,8 @@ export const PLANET_LABELS = {
   mars: 'อังคาร',
   jupiter: 'พฤหัสบดี',
   saturn: 'เสาร์',
+  rahu: 'ราหู',
+  ketu: 'เกตุ',
 };
 
 export const AREAS = [
@@ -109,6 +111,21 @@ export function getDailyForecast({ signId, year, month, day }) {
     retrograde: p.retrograde,
     dignity: getDignity(key, p.signId, p.degreeInSign),
   }));
+  // ราหู/เกตุเป็นจุดคำนวณ (ปมจันทร์) เดินถอยหลังเสมอ แสดงข้อมูลเรือนแต่ไม่นำมาคิดคะแนน
+  const nodes = siderealNodes(noon);
+  for (const key of ['rahu', 'ketu']) {
+    const n = nodes[key];
+    planetRows.push({
+      key,
+      label: PLANET_LABELS[key],
+      sign: ZODIAC_DATA[n.signId],
+      degreeInSign: n.degreeInSign,
+      house: houseFrom(natalIndex, n.signIndex),
+      retrograde: false,
+      node: true,
+      dignity: null,
+    });
+  }
   const jupiterHouse = planetRows.find((r) => r.key === 'jupiter').house;
   const saturnHouse = planetRows.find((r) => r.key === 'saturn').house;
 

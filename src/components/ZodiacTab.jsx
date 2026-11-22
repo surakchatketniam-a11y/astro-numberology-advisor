@@ -22,11 +22,13 @@ import { formatDegree } from '../utils/ephemeris';
 import { DignityBadge } from './common';
 import FormattedAnalysis from './FormattedAnalysis';
 
-function PositionRows({ chart, accent }) {
+function PositionRows({ chart, accent, nodeLabels = ['ราหู', 'เกตุ'] }) {
   const rows = [
     ['อาทิตย์', chart.sun],
     ['จันทร์', chart.moon],
     ['ลัคนา', chart.asc],
+    [nodeLabels[0], chart.rahu],
+    [nodeLabels[1], chart.ketu],
   ].filter(([, body]) => body);
   return (
     <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
@@ -54,6 +56,8 @@ function positionText(chart) {
     ['อาทิตย์', chart.sun],
     ['จันทร์', chart.moon],
     ['ลัคนา', chart.asc],
+    ['ราหู', chart.rahu],
+    ['เกตุ', chart.ketu],
   ]
     .filter(([, b]) => b)
     .map(([label, b]) => `${label}${b.sign.thName} ${formatDegree(b.degreeInSign)}${b.dignity ? ` (${b.dignity.label})` : ''}`)
@@ -377,7 +381,7 @@ export default function ZodiacTab({
                 </span>
               </div>
 
-              <PositionRows chart={result.western} accent="text-[#29ABE2]" />
+              <PositionRows chart={result.western} accent="text-[#29ABE2]" nodeLabels={['โหนดเหนือ (ราหู)', 'โหนดใต้ (เกตุ)']} />
 
               <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
                 <div className="px-4 py-2.5 flex items-center justify-between gap-3">

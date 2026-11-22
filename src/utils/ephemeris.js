@@ -22,6 +22,16 @@ export function meanObliquity(date) {
   return 23.439291 - 0.0130042 * T;
 }
 
+/**
+ * ราหู = ปมจันทร์ขึ้นเหนือ (ascending node) แบบเฉลี่ย (mean node) ตามที่ปฏิทินโหราศาสตร์ไทยใช้
+ * เดินถอยหลังสม่ำเสมอราว 0.053°/วัน; เกตุ = ราหู + 180°
+ * สูตร Meeus (Astronomical Algorithms, บทที่ 47) ลองจิจูด tropical ตามวสันตวิษุวัตของวัน
+ */
+export function meanNodeLongitude(date) {
+  const T = (date.getTime() - Date.UTC(2000, 0, 1, 12)) / (36525 * 86400000);
+  return norm360(125.0445479 - 1934.1362891 * T + 0.0020754 * T * T + (T * T * T) / 467441);
+}
+
 /** ลองจิจูดสุริยวิถีแบบ tropical (ตามวสันตวิษุวัตของวันนั้น) */
 export function tropicalLongitudes(date) {
   return {
@@ -71,10 +81,21 @@ function describe(lon) {
 function positionsAt(date, location) {
   const trop = tropicalLongitudes(date);
   const ay = lahiriAyanamsa(date);
+  const node = meanNodeLongitude(date);
   const out = {
     ayanamsa: ay,
-    tropical: { sun: describe(trop.sun), moon: describe(trop.moon) },
-    sidereal: { sun: describe(trop.sun - ay), moon: describe(trop.moon - ay) },
+    tropical: {
+      sun: describe(trop.sun),
+      moon: describe(trop.moon),
+      rahu: describe(node),
+      ketu: describe(node + 180),
+    },
+    sidereal: {
+      sun: describe(trop.sun - ay),
+      moon: describe(trop.moon - ay),
+      rahu: describe(node - ay),
+      ketu: describe(node + 180 - ay),
+    },
   };
   if (location) {
     const asc = tropicalAscendant(date, location.lat, location.lon);
@@ -172,4 +193,11 @@ export function moonPhasesInRange(start, days) {
     }
   }
   return out.sort((a, b) => a.date - b.date);
+}
+
+/** ราหู/เกตุแบบนิรายนะ (Lahiri) */
+export function siderealNodes(date) {
+  const node = meanNodeLongitude(date);
+  const ay = lahiriAyanamsa(date);
+  return { rahu: describe(node - ay), ketu: describe(node + 180 - ay) };
 }

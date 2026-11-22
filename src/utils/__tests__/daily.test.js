@@ -59,7 +59,7 @@ describe('getDailyForecast', () => {
     expect(f.moon.house).toBeGreaterThanOrEqual(1);
     expect(f.moon.house).toBeLessThanOrEqual(12);
     expect(f.areas).toHaveLength(4);
-    expect(f.planets).toHaveLength(5);
+    expect(f.planets).toHaveLength(7); // พุธ ศุกร์ อังคาร พฤหัส เสาร์ + ราหู เกตุ
     expect(f.advice.length).toBeGreaterThanOrEqual(1);
     expect(f.dayOfWeek.name).toBe('วันอาทิตย์'); // 22 Nov 2026 is Sunday
   });

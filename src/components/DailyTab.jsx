@@ -228,7 +228,8 @@ export default function DailyTab({ settings, onOpenSettings, onSaveHistory, last
                   </td>
                   <td className="py-2 pr-3">{p.house}</td>
                   <td className={`py-2 ${p.retrograde ? 'text-[#FFC000]' : 'text-[#7D7D7D]'}`}>
-                    {p.retrograde ? 'ถอยหลัง' : 'เดินหน้า'} <DignityBadge dignity={p.dignity} />
+                    {p.node ? 'ปมจันทร์ (ถอยหลังเสมอ)' : p.retrograde ? 'ถอยหลัง' : 'เดินหน้า'}{' '}
+                    <DignityBadge dignity={p.dignity} />
                   </td>
                 </tr>
               ))}

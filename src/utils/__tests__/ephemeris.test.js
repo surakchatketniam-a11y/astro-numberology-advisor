@@ -105,3 +105,37 @@ describe('findProvince', () => {
     expect(findProvince('')).toBeNull();
   });
 });
+
+import { meanNodeLongitude, siderealNodes } from '../ephemeris';
+
+describe('Rahu / Ketu (mean node)', () => {
+  it('matches the mean node at J2000 (125.04°)', () => {
+    expect(meanNodeLongitude(new Date(Date.UTC(2000, 0, 1, 12)))).toBeCloseTo(125.04, 1);
+  });
+
+  it('moves retrograde at ~0.053°/day', () => {
+    const a = meanNodeLongitude(new Date(Date.UTC(2026, 0, 1, 12)));
+    const b = meanNodeLongitude(new Date(Date.UTC(2026, 0, 11, 12)));
+    const delta = ((b - a + 540) % 360) - 180;
+    expect(delta).toBeCloseTo(-0.529, 1);
+  });
+
+  it('Ketu is always exactly opposite Rahu', () => {
+    const n = siderealNodes(new Date(Date.UTC(1977, 9, 29, 0)));
+    expect(Math.abs(((n.ketu.longitude - n.rahu.longitude + 360) % 360) - 180)).toBeLessThan(1e-9);
+  });
+
+  it('puts Rahu in sidereal Aquarius in mid-2026 and Virgo in Oct 1977', () => {
+    expect(siderealNodes(new Date(Date.UTC(2026, 5, 1, 5))).rahu.signId).toBe('aquarius');
+    const n77 = siderealNodes(new Date(Date.UTC(1977, 9, 28, 22)));
+    expect(n77.rahu.signId).toBe('virgo');
+    expect(n77.ketu.signId).toBe('pisces');
+  });
+
+  it('is included in birth charts for both systems', () => {
+    const c = computeBirthChart({ yearAD: 1977, month: 10, day: 29, birthTime: '05:00' });
+    expect(c.sidereal.rahu.signId).toBe('virgo');
+    expect(c.tropical.rahu.signId).toBe('libra');
+    expect(c.tropical.ketu.signId).toBe('aries');
+  });
+});

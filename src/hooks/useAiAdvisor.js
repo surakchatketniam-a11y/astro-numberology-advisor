@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { callGeminiAdvisor } from '../services/gemini';
+import { isAIConfigured } from '../utils/storage';
 
 /**
  * จัดการการเรียก Gemini แบบสตรีม: สถานะ loading/error/ผลลัพธ์, ยกเลิกได้, ยกเลิกอัตโนมัติเมื่อ unmount
@@ -23,7 +24,7 @@ export function useAiAdvisor({ settings, onOpenSettings }) {
 
   const run = useCallback(
     async (prompt, { image = null } = {}) => {
-      if (!settings.apiKey) {
+      if (!isAIConfigured(settings)) {
         onOpenSettings();
         return null;
       }
@@ -35,6 +36,8 @@ export function useAiAdvisor({ settings, onOpenSettings }) {
         const response = await callGeminiAdvisor({
           apiKey: settings.apiKey,
           model: settings.model,
+          proxyUrl: settings.proxyUrl,
+          useServerProxy: settings.useServerProxy,
           prompt,
           image,
           onPartial: setAiResult,
@@ -52,7 +55,14 @@ export function useAiAdvisor({ settings, onOpenSettings }) {
         setLoadingAI(false);
       }
     },
-    [settings.apiKey, settings.model, onOpenSettings]
+    [
+      settings.apiKey,
+      settings.model,
+      settings.proxyUrl,
+      settings.useServerProxy,
+      settings.serverProxyReady,
+      onOpenSettings,
+    ]
   );
 
   return { aiResult, loadingAI, aiError, run, stop, reset };

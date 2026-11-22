@@ -7,7 +7,16 @@ const MAX_PROFILES = 12;
 export const DEFAULT_SETTINGS = {
   apiKey: '',
   model: 'gemini-2.5-flash',
+  useServerProxy: true,
+  proxyUrl: '',
 };
+
+export function isAIConfigured(settings) {
+  if (!settings) return false;
+  const hasPersonalKey = Boolean((settings.apiKey || '').trim());
+  const proxyReady = settings.useServerProxy !== false && Boolean(settings.serverProxyReady);
+  return hasPersonalKey || proxyReady;
+}
 
 export const AVAILABLE_MODELS = [
   { id: 'gemini-2.5-flash', label: 'gemini-2.5-flash (แนะนำ — เร็วและแม่นยำ)' },
@@ -23,7 +32,12 @@ export function loadSettings() {
     const parsed = JSON.parse(raw);
     return {
       apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
-      model: typeof parsed.model === 'string' && parsed.model.trim() ? parsed.model.trim() : DEFAULT_SETTINGS.model,
+      model:
+        typeof parsed.model === 'string' && parsed.model.trim()
+          ? parsed.model.trim()
+          : DEFAULT_SETTINGS.model,
+      useServerProxy: typeof parsed.useServerProxy === 'boolean' ? parsed.useServerProxy : true,
+      proxyUrl: typeof parsed.proxyUrl === 'string' ? parsed.proxyUrl : '',
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -37,6 +51,8 @@ export function saveSettings(settings) {
       JSON.stringify({
         apiKey: (settings.apiKey || '').trim(),
         model: (settings.model || DEFAULT_SETTINGS.model).trim(),
+        useServerProxy: settings.useServerProxy !== false,
+        proxyUrl: (settings.proxyUrl || '').trim(),
       })
     );
   } catch {

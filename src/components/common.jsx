@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, Loader2, Sparkles, Square } from 'lucide-react';
 import { ZODIAC_DATA } from '../utils/zodiac';
+import { isAIConfigured } from '../utils/storage';
 import { SIGN_IDS } from '../utils/ephemeris';
 import { useProfiles } from '../context/ProfilesContext';
 import { profileSignId } from '../utils/profiles';
@@ -102,9 +103,9 @@ export function AiActionBlock({ settings, loadingAI, aiError, onRun, onStop, run
         ) : (
           <>
             <Sparkles className="h-4 w-4 text-[#FFC000]" />
-            {settings.apiKey
+            {isAIConfigured(settings)
               ? `${runLabel} (${settings.model})`
-              : 'ตั้งค่า Gemini API Key เพื่อขอคำแนะนำเชิงลึก'}
+              : 'ตั้งค่า Gemini API เพื่อขอคำแนะนำเชิงลึก'}
           </>
         )}
       </button>

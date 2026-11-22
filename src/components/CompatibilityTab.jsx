@@ -12,6 +12,7 @@ import {
 import { THAI_MONTHS } from '../utils/zodiac';
 import { analyzeCompatibility, displayName } from '../utils/compatibility';
 import { callGeminiAdvisor } from '../services/gemini';
+import { isAIConfigured } from '../utils/storage';
 import ProfileBar from './ProfileBar';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
@@ -137,7 +138,7 @@ export default function CompatibilityTab({ settings, onOpenSettings, onSaveHisto
 
   const handleDeepAnalyze = async () => {
     if (!result) return;
-    if (!settings.apiKey) {
+    if (!isAIConfigured(settings)) {
       onOpenSettings();
       return;
     }
@@ -163,6 +164,8 @@ export default function CompatibilityTab({ settings, onOpenSettings, onSaveHisto
       const response = await callGeminiAdvisor({
         apiKey: settings.apiKey,
         model: settings.model,
+        proxyUrl: settings.proxyUrl,
+        useServerProxy: settings.useServerProxy,
         prompt,
         onPartial: setAiResult,
         signal: controller.signal,
@@ -328,9 +331,9 @@ export default function CompatibilityTab({ settings, onOpenSettings, onSaveHisto
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 text-[#FFC000]" />
-                  {settings.apiKey
+                  {isAIConfigured(settings)
                     ? `วิเคราะห์ความสัมพันธ์เชิงลึกด้วย AI (${settings.model})`
-                    : 'ตั้งค่า Gemini API Key เพื่อวิเคราะห์เชิงลึก'}
+                    : 'ตั้งค่า Gemini API เพื่อวิเคราะห์เชิงลึก'}
                 </>
               )}
             </button>

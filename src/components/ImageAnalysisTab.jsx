@@ -9,6 +9,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { callGeminiAdvisor, prepareImageForGemini } from '../services/gemini';
+import { isAIConfigured } from '../utils/storage';
 import { calculateZodiacComparison } from '../utils/zodiac';
 import FormattedAnalysis from './FormattedAnalysis';
 import FollowUpChat from './FollowUpChat';
@@ -93,7 +94,7 @@ export default function ImageAnalysisTab({
       setError('กรุณาอัปโหลดรูปภาพคำทำนายก่อนเริ่มการวิเคราะห์');
       return;
     }
-    if (!settings.apiKey) {
+    if (!isAIConfigured(settings)) {
       onOpenSettings();
       return;
     }
@@ -120,6 +121,8 @@ export default function ImageAnalysisTab({
       const response = await callGeminiAdvisor({
         apiKey: settings.apiKey,
         model: settings.model,
+        proxyUrl: settings.proxyUrl,
+        useServerProxy: settings.useServerProxy,
         prompt,
         image: {
           base64: imageData.base64,
@@ -279,9 +282,9 @@ export default function ImageAnalysisTab({
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              {settings.apiKey
+              {isAIConfigured(settings)
                 ? `วิเคราะห์ภาพคำทำนายด้วย AI (${settings.model})`
-                : 'ตั้งค่า Gemini API Key เพื่อวิเคราะห์ภาพ'}
+                : 'ตั้งค่า Gemini API เพื่อวิเคราะห์ภาพ'}
             </>
           )}
         </button>

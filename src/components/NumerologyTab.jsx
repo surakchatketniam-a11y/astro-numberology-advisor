@@ -22,6 +22,7 @@ import {
   generateNameLineSummary,
 } from '../utils/nameNumerology';
 import { callGeminiAdvisor } from '../services/gemini';
+import { isAIConfigured } from '../utils/storage';
 import { renderCompareCardPng, renderNumerologyCardPng } from '../utils/shareCard';
 import FormattedAnalysis from './FormattedAnalysis';
 import FollowUpChat from './FollowUpChat';
@@ -162,7 +163,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
   const handleDeepAnalyze = async () => {
     if (mode === 'name' && !nameResult) return;
     if (mode !== 'name' && !result) return;
-    if (!settings.apiKey) {
+    if (!isAIConfigured(settings)) {
       onOpenSettings();
       return;
     }
@@ -244,6 +245,8 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
       const response = await callGeminiAdvisor({
         apiKey: settings.apiKey,
         model: settings.model,
+        proxyUrl: settings.proxyUrl,
+        useServerProxy: settings.useServerProxy,
         prompt,
       });
 
@@ -860,9 +863,9 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 text-[#FFC000]" />
-                  {settings.apiKey
+                  {isAIConfigured(settings)
                     ? `วิเคราะห์เชิงลึกด้วย AI (${settings.model})`
-                    : 'ตั้งค่า Gemini API Key เพื่อวิเคราะห์เชิงลึก'}
+                    : 'ตั้งค่า Gemini API เพื่อวิเคราะห์เชิงลึก'}
                 </>
               )}
             </button>

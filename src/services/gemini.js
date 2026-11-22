@@ -137,39 +137,118 @@ function throwForHttpError(status, data) {
   throw new Error(`ไม่สามารถเชื่อมต่อ Gemini API ได้: ${apiMsg}`);
 }
 
+export function resolveProxyEndpoint(proxyUrl = '') {
+  const clean = (proxyUrl || '').trim().replace(/\/+$/, '');
+  if (!clean) return '/api/gemini';
+  return clean.endsWith('/api/gemini') ? clean : `${clean}/api/gemini`;
+}
+
+export async function checkProxyHealth(proxyUrl = '') {
+  try {
+    const endpoint = resolveProxyEndpoint(proxyUrl);
+    const res = await fetch(endpoint, { method: 'GET', cache: 'no-store' });
+    if (!res.ok) {
+      return { ok: false, serverKeyConfigured: false, rateLimit: null };
+    }
+    const data = await res.json().catch(() => ({}));
+    return {
+      ok: Boolean(data.ok),
+      serverKeyConfigured: Boolean(data.serverKeyConfigured),
+      rateLimit: data.rateLimit || null,
+    };
+  } catch {
+    return { ok: false, serverKeyConfigured: false, rateLimit: null };
+  }
+}
+
+export async function testGeminiConnection({
+  apiKey = '',
+  model = 'gemini-2.5-flash',
+  proxyUrl = '',
+  useServerProxy = true,
+}) {
+  const cleanKey = (apiKey || '').trim();
+  const payload = {
+    contents: [{ role: 'user', parts: [{ text: 'ตอบสั้นๆ ว่า "พร้อมใช้งาน"' }] }],
+    generationConfig: { maxOutputTokens: 20, temperature: 0 },
+  };
+
+  let response;
+  if (cleanKey) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      model
+    )}:generateContent`;
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey },
+      body: JSON.stringify(payload),
+    });
+  } else if (useServerProxy) {
+    const endpoint = resolveProxyEndpoint(proxyUrl);
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, stream: false, payload }),
+    });
+  } else {
+    throw new Error('กรุณากรอก Gemini API Key หรือเปิดใช้งานโหมดเซิร์ฟเวอร์กลาง');
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throwForHttpError(response.status, data);
+  }
+  return {
+    ok: true,
+    mode: cleanKey ? 'byok' : 'proxy',
+    model,
+  };
+}
+
 /**
- * เรียก Gemini แบบสตรีม (SSE) ถ้าส่ง onPartial มา จะถูกเรียกทุกครั้งที่มีข้อความใหม่
- * ด้วยผลที่ parse บางส่วนแล้ว ({ analysis, lineSummary: '', streaming: true })
- * Timeout นับแบบ "ไม่มีข้อมูลเข้ามา" (reset ทุก chunk) ไม่ใช่เวลารวม
+ * เรียก Gemini แบบสตรีม (SSE) — รองรับทั้ง API Key ส่วนตัว (BYOK) และ Server Proxy (/api/gemini)
  */
 export async function callGeminiAdvisor({
-  apiKey,
+  apiKey = '',
   model = 'gemini-2.5-flash',
   prompt,
   image = null,
   signal = null,
   onPartial = null,
+  proxyUrl = '',
+  useServerProxy = true,
 }) {
   const cleanKey = (apiKey || '').trim();
-  if (!cleanKey) {
+  const useDirect = Boolean(cleanKey);
+
+  if (!useDirect && !useServerProxy) {
     throw new Error('กรุณากรอก Gemini API Key ในหน้าตั้งค่า (Settings) ก่อนใช้งานการวิเคราะห์ด้วย AI');
   }
-
-  // ส่ง key ผ่าน header แทน query string เพื่อไม่ให้รั่วลง URL/log/proxy
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
-  )}:streamGenerateContent?alt=sse`;
 
   const parts = [{ text: prompt }];
   if (image && image.base64 && image.mimeType) {
     parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
   }
 
-  const body = {
+  const geminiPayload = {
     system_instruction: { parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }] },
     contents: [{ role: 'user', parts }],
     generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 8192 },
   };
+
+  const endpoint = useDirect
+    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        model
+      )}:streamGenerateContent?alt=sse`
+    : resolveProxyEndpoint(proxyUrl);
+
+  const fetchHeaders = useDirect
+    ? { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey }
+    : { 'Content-Type': 'application/json' };
+
+  const fetchBody = useDirect
+    ? JSON.stringify(geminiPayload)
+    : JSON.stringify({ model, stream: true, payload: geminiPayload });
 
   const controller = new AbortController();
   let timedOut = false;
@@ -211,8 +290,8 @@ export async function callGeminiAdvisor({
     armTimeout();
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey },
-      body: JSON.stringify(body),
+      headers: fetchHeaders,
+      body: fetchBody,
       signal: controller.signal,
     });
 
@@ -300,21 +379,21 @@ export async function callGeminiAdvisor({
  * ถาม-ตอบต่อเนื่อง (Multi-turn Follow-up Chat) โดยอ้างอิงบริบทบทวิเคราะห์เดิม
  */
 export async function callGeminiFollowUp({
-  apiKey,
+  apiKey = '',
   model = 'gemini-2.5-flash',
   baseContext,
   baseAnalysis,
   messages = [],
   question,
+  proxyUrl = '',
+  useServerProxy = true,
 }) {
   const cleanKey = (apiKey || '').trim();
-  if (!cleanKey) {
+  const useDirect = Boolean(cleanKey);
+
+  if (!useDirect && !useServerProxy) {
     throw new Error('กรุณากรอก Gemini API Key ในหน้าตั้งค่า (Settings) ก่อนใช้งาน');
   }
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
-  )}:generateContent`;
 
   const contents = [
     { role: 'user', parts: [{ text: baseContext }] },
@@ -326,17 +405,26 @@ export async function callGeminiFollowUp({
     { role: 'user', parts: [{ text: question }] },
   ];
 
+  const geminiPayload = {
+    system_instruction: { parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }] },
+    contents,
+    generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 2048 },
+  };
+
+  const endpoint = useDirect
+    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        model
+      )}:generateContent`
+    : resolveProxyEndpoint(proxyUrl);
+
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': cleanKey,
-    },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: ADVISOR_SYSTEM_INSTRUCTION }] },
-      contents,
-      generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 2048 },
-    }),
+    headers: useDirect
+      ? { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey }
+      : { 'Content-Type': 'application/json' },
+    body: useDirect
+      ? JSON.stringify(geminiPayload)
+      : JSON.stringify({ model, stream: false, payload: geminiPayload }),
   });
 
   const data = await response.json().catch(() => ({}));

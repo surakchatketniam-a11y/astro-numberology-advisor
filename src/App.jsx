@@ -28,12 +28,14 @@ import {
   deleteHistoryEntry,
   deleteProfile,
   importHistory,
+  isAIConfigured,
   loadHistory,
   loadProfiles,
   loadSettings,
   saveProfile,
   saveSettings,
 } from './utils/storage';
+import { checkProxyHealth } from './services/gemini';
 
 const TABS = [
   { id: 'zodiac', enLabel: '01 / ZODIAC', label: 'เช็กราศี & ดวงชะตา', shortLabel: 'เช็กราศี', icon: Compass },
@@ -59,9 +61,30 @@ function AppShell() {
   const { openGlossary } = useGlossary();
   const [activeTab, setActiveTab] = useState(getInitialTab);
   const [settings, setSettings] = useState(() => loadSettings());
+  const [proxyStatus, setProxyStatus] = useState({
+    ok: false,
+    serverKeyConfigured: false,
+    rateLimit: null,
+  });
   const [history, setHistory] = useState(() => loadHistory());
   const [profiles, setProfiles] = useState(() => loadProfiles());
   const [lastZodiacResult, setLastZodiacResult] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    checkProxyHealth(settings.proxyUrl).then((status) => {
+      if (active) setProxyStatus(status);
+    });
+    return () => {
+      active = false;
+    };
+  }, [settings.proxyUrl]);
+
+  const effectiveSettings = {
+    ...settings,
+    serverProxyReady: proxyStatus.serverKeyConfigured,
+  };
+  const aiReady = isAIConfigured(effectiveSettings);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -211,9 +234,15 @@ function AppShell() {
               <span className="hidden sm:inline">ตั้งค่า AI</span>
               <span
                 className={`h-2 w-2 ${
-                  settings.apiKey ? 'bg-[#4ade80]' : 'bg-[#FFC000]'
+                  aiReady ? 'bg-[#4ade80]' : 'bg-[#FFC000]'
                 }`}
-                title={settings.apiKey ? 'เชื่อมต่อ API Key แล้ว' : 'ยังไม่ได้ตั้งค่า API Key'}
+                title={
+                  settings.apiKey
+                    ? 'เชื่อมต่อด้วย API Key ส่วนตัวแล้ว'
+                    : proxyStatus.serverKeyConfigured
+                      ? 'เชื่อมต่อผ่าน Server Proxy พร้อมใช้งาน'
+                      : 'ยังไม่ได้ตั้งค่า AI'
+                }
               />
             </button>
           </div>
@@ -266,7 +295,7 @@ function AppShell() {
         {/* Keep all tabs mounted to preserve user input & results */}
         <section className={activeTab === 'zodiac' ? 'block' : 'hidden'}>
           <ZodiacTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             onZodiacComputed={setLastZodiacResult}
@@ -278,7 +307,7 @@ function AppShell() {
 
         <section className={activeTab === 'daily' ? 'block' : 'hidden'}>
           <DailyTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             lastZodiacResult={lastZodiacResult}
@@ -287,7 +316,7 @@ function AppShell() {
 
         <section className={activeTab === 'monthly' ? 'block' : 'hidden'}>
           <MonthlyTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             lastZodiacResult={lastZodiacResult}
@@ -296,7 +325,7 @@ function AppShell() {
 
         <section className={activeTab === 'compat' ? 'block' : 'hidden'}>
           <CompatibilityTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
           />
@@ -304,7 +333,7 @@ function AppShell() {
 
         <section className={activeTab === 'numerology' ? 'block' : 'hidden'}>
           <NumerologyTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
           />
@@ -312,7 +341,7 @@ function AppShell() {
 
         <section className={activeTab === 'image' ? 'block' : 'hidden'}>
           <ImageAnalysisTab
-            settings={settings}
+            settings={effectiveSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             lastZodiacResult={lastZodiacResult}
@@ -361,6 +390,7 @@ function AppShell() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
+        proxyStatus={proxyStatus}
         onSave={handleSaveSettings}
       />
 

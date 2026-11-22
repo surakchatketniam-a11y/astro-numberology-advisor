@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle, Check, Copy, Loader2, MessageSquare, Send } from 'lucide-react';
 import { callGeminiFollowUp } from '../services/gemini';
+import { isAIConfigured } from '../utils/storage';
 
 const DEFAULT_SUGGESTIONS = [
   'ช่วยวางแผนการงานและการเงิน 3 เดือนข้างหน้าเป็นขั้นเป็นตอน',
@@ -27,7 +28,7 @@ export default function FollowUpChat({
     const cleanQ = (questionText || '').trim();
     if (!cleanQ || loading) return;
 
-    if (!settings.apiKey) {
+    if (!isAIConfigured(settings)) {
       onOpenSettings();
       return;
     }
@@ -42,6 +43,8 @@ export default function FollowUpChat({
       const response = await callGeminiFollowUp({
         apiKey: settings.apiKey,
         model: settings.model,
+        proxyUrl: settings.proxyUrl,
+        useServerProxy: settings.useServerProxy,
         baseContext,
         baseAnalysis,
         messages,

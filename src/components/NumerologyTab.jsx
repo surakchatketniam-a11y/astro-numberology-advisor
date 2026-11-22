@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   AlertCircle,
   Car,
@@ -6,6 +6,7 @@ import {
   Loader2,
   Phone,
   Sparkles,
+  Square,
 } from 'lucide-react';
 import {
   analyzeLicensePlate,
@@ -74,6 +75,12 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
     });
   };
 
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const handleStop = () => abortRef.current?.abort();
+
   const handleDeepAnalyze = async () => {
     if (!result) return;
     if (!settings.apiKey) {
@@ -81,6 +88,8 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
       return;
     }
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoadingAI(true);
     setAiError('');
     try {
@@ -118,6 +127,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
         model: settings.model,
         prompt,
         onPartial: setAiResult,
+        signal: controller.signal,
       });
 
       setAiResult(response);
@@ -131,6 +141,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
       });
     } catch (err) {
       setAiResult(null);
+      if (controller.signal.aborted) return; // ผู้ใช้กดหยุดเอง
       setAiError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API');
     } finally {
       setLoadingAI(false);
@@ -375,6 +386,16 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
                 </>
               )}
             </button>
+            {loadingAI && (
+              <button
+                type="button"
+                onClick={handleStop}
+                className="lambo-btn-ghost w-full px-5 py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Square className="h-3.5 w-3.5 text-[#ff8a80]" />
+                หยุดการวิเคราะห์
+              </button>
+            )}
 
             {aiError && (
               <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">

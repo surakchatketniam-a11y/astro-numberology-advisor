@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -7,6 +7,7 @@ import {
   MapPin,
   Scale,
   Sparkles,
+  Square,
   Sun,
   AlertCircle,
 } from 'lucide-react';
@@ -110,6 +111,12 @@ export default function ZodiacTab({
     });
   };
 
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const handleStop = () => abortRef.current?.abort();
+
   const handleDeepAnalyze = async () => {
     if (!result) return;
     if (!settings.apiKey) {
@@ -117,6 +124,8 @@ export default function ZodiacTab({
       return;
     }
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoadingAI(true);
     setAiError('');
     try {
@@ -143,6 +152,7 @@ export default function ZodiacTab({
         model: settings.model,
         prompt,
         onPartial: setAiResult,
+        signal: controller.signal,
       });
 
       setAiResult(response);
@@ -156,6 +166,7 @@ export default function ZodiacTab({
       });
     } catch (err) {
       setAiResult(null);
+      if (controller.signal.aborted) return; // ผู้ใช้กดหยุดเอง
       setAiError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API');
     } finally {
       setLoadingAI(false);
@@ -427,6 +438,16 @@ export default function ZodiacTab({
                 </>
               )}
             </button>
+            {loadingAI && (
+              <button
+                type="button"
+                onClick={handleStop}
+                className="lambo-btn-ghost w-full px-5 py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Square className="h-3.5 w-3.5 text-[#ff8a80]" />
+                หยุดการวิเคราะห์
+              </button>
+            )}
 
             {aiError && (
               <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">

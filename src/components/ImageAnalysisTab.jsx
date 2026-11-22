@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   AlertCircle,
   Image as ImageIcon,
   Loader2,
   Sparkles,
+  Square,
   Trash2,
   UploadCloud,
 } from 'lucide-react';
@@ -24,6 +25,12 @@ export default function ImageAnalysisTab({
   const [loadingAI, setLoadingAI] = useState(false);
   const [error, setError] = useState('');
   const [aiResult, setAiResult] = useState(null);
+
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const handleStop = () => abortRef.current?.abort();
 
   const handleFileChange = async (file) => {
     if (!file) return;
@@ -75,6 +82,8 @@ export default function ImageAnalysisTab({
       return;
     }
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoadingAI(true);
     setError('');
     try {
@@ -100,6 +109,7 @@ export default function ImageAnalysisTab({
           mimeType: imageData.mimeType,
         },
         onPartial: setAiResult,
+        signal: controller.signal,
       });
 
       setAiResult(response);
@@ -113,6 +123,7 @@ export default function ImageAnalysisTab({
       });
     } catch (err) {
       setAiResult(null);
+      if (controller.signal.aborted) return; // ผู้ใช้กดหยุดเอง
       setError(err.message || 'ไม่สามารถวิเคราะห์รูปภาพได้ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoadingAI(false);
@@ -245,6 +256,17 @@ export default function ImageAnalysisTab({
             </>
           )}
         </button>
+
+        {loadingAI && (
+          <button
+            type="button"
+            onClick={handleStop}
+            className="lambo-btn-ghost w-full px-5 py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Square className="h-3.5 w-3.5 text-[#ff8a80]" />
+            หยุดการวิเคราะห์
+          </button>
+        )}
       </form>
 
       {aiResult && (

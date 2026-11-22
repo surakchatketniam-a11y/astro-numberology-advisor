@@ -3,7 +3,6 @@ import {
   Calendar,
   Clock,
   Compass,
-  Flame,
   Loader2,
   MapPin,
   Scale,
@@ -19,13 +18,6 @@ import {
 import { callGeminiAdvisor } from '../services/gemini';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
-
-const ELEMENT_BADGE = {
-  Fire: 'bg-orange-500/15 text-orange-300 border-orange-400/30',
-  Earth: 'bg-amber-500/15 text-amber-300 border-amber-400/30',
-  Air: 'bg-sky-500/15 text-sky-300 border-sky-400/30',
-  Water: 'bg-indigo-500/15 text-indigo-300 border-indigo-400/30',
-};
 
 export default function ZodiacTab({
   settings,
@@ -134,33 +126,34 @@ export default function ZodiacTab({
   const offlineLineSummary = result ? generateZodiacLineSummary(result) : '';
 
   return (
-    <div className="space-y-5">
-      {/* Input Card */}
-      <form onSubmit={handleCalculate} className="glass-card rounded-2xl p-4 sm:p-6 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base sm:text-lg font-semibold text-amber-200 flex items-center gap-2">
-              <Compass className="h-5 w-5 text-amber-400" />
-              เปรียบเทียบราศีไทย &amp; สากล
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-              คำนวณทันทีแบบออฟไลน์ เทียบโหราศาสตร์ไทย (กลางเดือน) กับสากล (19–23 ของเดือน)
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* Input Panel */}
+      <form onSubmit={handleCalculate} className="lambo-panel p-5 sm:p-8 space-y-6">
+        <div className="border-b border-[#333333] pb-4">
+          <p className="font-display-latin text-xs text-[#FFC000] tracking-[0.225px] mb-1">
+            ZODIAC COMPARISON ENGINE
+          </p>
+          <h2 className="text-xl sm:text-2xl font-medium text-white flex items-center gap-2.5">
+            <Compass className="h-5 w-5 text-[#FFC000] shrink-0" />
+            เปรียบเทียบราศีไทยและสากล
+          </h2>
+          <p className="text-sm sm:text-base text-[#7D7D7D] mt-1">
+            คำนวณทันทีแบบออฟไลน์ เทียบโหราศาสตร์ไทย (กลางเดือน) กับสากล (19–23 ของเดือน)
+          </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs text-slate-300 mb-1.5 flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 text-amber-400" /> วันที่
+            <label className="block text-sm text-[#a6a6a6] mb-2 flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 text-[#FFC000]" /> วันที่
             </label>
             <select
               value={safeDay}
               onChange={(e) => setDay(Number(e.target.value))}
-              className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3 py-2.5 text-sm text-slate-100"
+              className="lambo-input"
             >
               {Array.from({ length: maxDayInMonth }, (_, i) => i + 1).map((d) => (
-                <option key={d} value={d} className="bg-slate-900">
+                <option key={d} value={d} className="bg-black text-white">
                   {d}
                 </option>
               ))}
@@ -168,14 +161,14 @@ export default function ZodiacTab({
           </div>
 
           <div>
-            <label className="block text-xs text-slate-300 mb-1.5">เดือนเกิด</label>
+            <label className="block text-sm text-[#a6a6a6] mb-2">เดือนเกิด</label>
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3 py-2.5 text-sm text-slate-100"
+              className="lambo-input"
             >
               {THAI_MONTHS.map((mName, idx) => (
-                <option key={mName} value={idx + 1} className="bg-slate-900">
+                <option key={mName} value={idx + 1} className="bg-black text-white">
                   {mName}
                 </option>
               ))}
@@ -183,14 +176,14 @@ export default function ZodiacTab({
           </div>
 
           <div>
-            <label className="block text-xs text-slate-300 mb-1.5">ปีเกิด (พ.ศ.)</label>
+            <label className="block text-sm text-[#a6a6a6] mb-2">ปีเกิด (พ.ศ.)</label>
             <select
               value={yearAD}
               onChange={(e) => setYearAD(Number(e.target.value))}
-              className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3 py-2.5 text-sm text-slate-100"
+              className="lambo-input"
             >
               {years.map((y) => (
-                <option key={y} value={y} className="bg-slate-900">
+                <option key={y} value={y} className="bg-black text-white">
                   {y + 543} ({y})
                 </option>
               ))}
@@ -198,37 +191,37 @@ export default function ZodiacTab({
           </div>
         </div>
 
-        {/* Optional fields for deeper AI analysis */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        {/* Optional fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5 flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5 text-slate-400" /> เวลาเกิด (ไม่บังคับ — ใช้เสริมวิเคราะห์ AI)
+            <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-[#7D7D7D]" /> เวลาเกิด (ไม่บังคับ — เสริมวิเคราะห์ AI)
             </label>
             <input
               type="time"
               value={birthTime}
               onChange={(e) => setBirthTime(e.target.value)}
-              className="w-full rounded-xl bg-slate-900/80 border border-slate-700/80 focus:border-amber-400/70 focus:outline-none px-3 py-2 text-sm text-slate-100"
+              className="lambo-input"
             />
           </div>
 
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5 flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 text-slate-400" /> จังหวัดที่เกิด (ไม่บังคับ)
+            <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 text-[#7D7D7D]" /> จังหวัดที่เกิด (ไม่บังคับ)
             </label>
             <input
               type="text"
               value={birthProvince}
               onChange={(e) => setBirthProvince(e.target.value)}
               placeholder="เช่น กรุงเทพมหานคร, เชียงใหม่"
-              className="w-full rounded-xl bg-slate-900/80 border border-slate-700/80 focus:border-amber-400/70 focus:outline-none px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+              className="lambo-input"
             />
           </div>
         </div>
 
         <button
           type="submit"
-          className="gold-button w-full rounded-xl py-3 px-4 text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer"
+          className="lambo-btn-gold w-full px-6 py-4 text-base flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sun className="h-4 w-4" />
           คำนวณเปรียบเทียบราศีทันที
@@ -237,18 +230,18 @@ export default function ZodiacTab({
 
       {/* Instant Client-side Comparison Result */}
       {result && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Summary Strip */}
-          <div className="glass-card-subtle rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 font-medium">
+          <div className="lambo-card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="lambo-badge bg-[#2e2300] border border-[#594300] text-[#FFC000]">
                 {result.dayOfWeek.name}
               </span>
-              <span className="text-slate-300">{result.formattedDateTH}</span>
+              <span className="text-base text-white font-medium">{result.formattedDateTH}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400">เลขรหัสชีวิต:</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-800 border border-amber-500/30 text-amber-300 font-semibold">
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm text-[#7D7D7D]">เลขรหัสชีวิต</span>
+              <span className="px-3 py-1 bg-black border border-[#FFC000] text-[#FFC000] font-semibold text-base">
                 {result.lifePathNumber}
               </span>
             </div>
@@ -257,104 +250,99 @@ export default function ZodiacTab({
           {/* Side-by-Side Comparison Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Thai Sidereal Card */}
-            <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3 border-amber-500/30">
-              <div className="flex items-start justify-between gap-2">
+            <div className="lambo-card border-t-2 border-t-[#FFC000] p-5 sm:p-6 space-y-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] uppercase tracking-wider text-amber-400/90 font-medium">
-                    โหราศาสตร์ไทย (Thai Sidereal)
-                  </span>
-                  <h3 className="text-xl font-bold text-slate-50 mt-0.5">
+                  <p className="font-display-latin text-[11px] text-[#FFCE3E] tracking-[0.225px]">
+                    THAI SIDEREAL
+                  </p>
+                  <h3 className="text-2xl font-medium text-white mt-1">
                     {result.thaiSign.thName}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-sm text-[#7D7D7D] mt-0.5">
                     ช่วงวันที่: {result.thaiSign.thaiRange}
                   </p>
                 </div>
-                <span
-                  className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
-                    ELEMENT_BADGE[result.thaiSign.elementEn]
-                  }`}
-                >
+                <span className="lambo-badge bg-black border border-[#494949] text-[#FFCE3E]">
                   {result.thaiSign.element}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-900/75 border border-slate-800 px-3 py-2 text-xs flex items-center justify-between">
-                <span className="text-slate-400">ดาวประจำตัว</span>
-                <span className="text-amber-200 font-medium">{result.thaiSign.thaiRuler}</span>
+              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
+                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
+                <span className="text-white font-medium">{result.thaiSign.thaiRuler}</span>
               </div>
 
-              <div className="space-y-2 text-xs sm:text-sm leading-relaxed">
+              <div className="space-y-3 text-base leading-[1.7]">
                 <div>
-                  <p className="text-amber-300/90 font-medium text-xs mb-0.5">จุดเด่นเชิงจิตวิทยา</p>
-                  <p className="text-slate-200">{result.thaiSign.psychology}</p>
+                  <p className="text-xs font-medium text-[#FFCE3E] mb-1">จุดเด่นเชิงจิตวิทยา</p>
+                  <p className="text-[#F5F5F5]">{result.thaiSign.psychology}</p>
                 </div>
-                <div className="pt-1 border-t border-slate-800/80">
-                  <p className="text-emerald-300/90 font-medium text-xs mb-0.5">แนวทางพัฒนาตนเอง</p>
-                  <p className="text-slate-300">{result.thaiSign.growthTip}</p>
+                <div className="pt-3 border-t border-[#333333]">
+                  <p className="text-xs font-medium text-[#a6a6a6] mb-1">แนวทางพัฒนาตนเอง</p>
+                  <p className="text-[#a6a6a6]">{result.thaiSign.growthTip}</p>
                 </div>
               </div>
             </div>
 
             {/* Western Tropical Card */}
-            <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3 border-sky-400/25">
-              <div className="flex items-start justify-between gap-2">
+            <div className="lambo-card border-t-2 border-t-[#29ABE2] p-5 sm:p-6 space-y-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] uppercase tracking-wider text-sky-400 font-medium">
-                    โหราศาสตร์สากล (Western Tropical)
-                  </span>
-                  <h3 className="text-xl font-bold text-slate-50 mt-0.5">
+                  <p className="font-display-latin text-[11px] text-[#29ABE2] tracking-[0.225px]">
+                    WESTERN TROPICAL
+                  </p>
+                  <h3 className="text-2xl font-medium text-white mt-1">
                     {result.westernSign.thName} ({result.westernSign.enName})
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-sm text-[#7D7D7D] mt-0.5">
                     ช่วงวันที่: {result.westernSign.westernRange}
                   </p>
                 </div>
-                <span
-                  className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
-                    ELEMENT_BADGE[result.westernSign.elementEn]
-                  }`}
-                >
+                <span className="lambo-badge bg-black border border-[#494949] text-[#29ABE2]">
                   {result.westernSign.element}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-900/75 border border-slate-800 px-3 py-2 text-xs flex items-center justify-between">
-                <span className="text-slate-400">ดาวประจำตัว</span>
-                <span className="text-sky-200 font-medium">{result.westernSign.westernRuler}</span>
+              <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
+                <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
+                <span className="text-white font-medium">{result.westernSign.westernRuler}</span>
               </div>
 
-              <div className="space-y-2 text-xs sm:text-sm leading-relaxed">
+              <div className="space-y-3 text-base leading-[1.7]">
                 <div>
-                  <p className="text-sky-300/90 font-medium text-xs mb-0.5">จุดเด่นเชิงจิตวิทยา</p>
-                  <p className="text-slate-200">{result.westernSign.psychology}</p>
+                  <p className="text-xs font-medium text-[#29ABE2] mb-1">จุดเด่นเชิงจิตวิทยา</p>
+                  <p className="text-[#F5F5F5]">{result.westernSign.psychology}</p>
                 </div>
-                <div className="pt-1 border-t border-slate-800/80">
-                  <p className="text-emerald-300/90 font-medium text-xs mb-0.5">แนวทางพัฒนาตนเอง</p>
-                  <p className="text-slate-300">{result.westernSign.growthTip}</p>
+                <div className="pt-3 border-t border-[#333333]">
+                  <p className="text-xs font-medium text-[#a6a6a6] mb-1">แนวทางพัฒนาตนเอง</p>
+                  <p className="text-[#a6a6a6]">{result.westernSign.growthTip}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Comparative Note */}
-          <div className="rounded-2xl bg-slate-900/80 border border-amber-500/20 p-4 flex items-start gap-3">
-            <Scale className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-            <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              <p className="font-semibold text-amber-200 mb-1">
+          <div className="lambo-panel p-5 flex items-start gap-3.5">
+            <Scale className="h-5 w-5 text-[#FFC000] shrink-0 mt-1" />
+            <div className="text-base text-[#F5F5F5] leading-[1.7]">
+              <p className="font-medium text-white mb-1">
                 {result.isSameSign
                   ? 'ทั้งสองระบบตรงกัน — พลังธาตุชัดเจน'
                   : 'มุมมองเปรียบเทียบ 2 ระบบ (ไทย vs สากล)'}
               </p>
-              <p>{result.comparisonNote}</p>
+              <p className="text-[#a6a6a6]">{result.comparisonNote}</p>
             </div>
           </div>
 
           {/* Deep AI Analysis Trigger */}
-          <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <Flame className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-slate-100">
+          <div className="lambo-panel p-5 sm:p-6 space-y-4">
+            <div>
+              <p className="font-display-latin text-[11px] text-[#7D7D7D] tracking-[0.2px]">
+                DEEP ADVISORY
+              </p>
+              <h3 className="text-base sm:text-lg font-medium text-white flex items-center gap-2 mt-0.5">
+                <Sparkles className="h-4 w-4 text-[#FFC000]" />
                 ต่อยอดวิเคราะห์เชิงลึกด้วย Gemini AI
               </h3>
             </div>
@@ -363,13 +351,13 @@ export default function ZodiacTab({
               value={focusTopic}
               onChange={(e) => setFocusTopic(e.target.value)}
               placeholder="คำถามเพิ่มเติม (ไม่บังคับ) เช่น อยากวางแผนเปลี่ยนงานช่วงครึ่งปีหลัง หรือบริหารการเงิน"
-              className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500"
+              className="lambo-input"
             />
             <button
               type="button"
               onClick={handleDeepAnalyze}
               disabled={loadingAI}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/25 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 border border-amber-400/40 text-amber-200 py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-60"
+              className="lambo-btn-ghost w-full px-5 py-3.5 text-base font-medium flex items-center justify-center gap-2 cursor-pointer"
             >
               {loadingAI ? (
                 <>
@@ -378,7 +366,7 @@ export default function ZodiacTab({
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="h-4 w-4 text-[#FFC000]" />
                   {settings.apiKey
                     ? `วิเคราะห์เชิงลึกด้วย AI (${settings.model})`
                     : 'ตั้งค่า Gemini API Key เพื่อวิเคราะห์เชิงลึก'}
@@ -387,8 +375,8 @@ export default function ZodiacTab({
             </button>
 
             {aiError && (
-              <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-200 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+              <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{aiError}</span>
               </div>
             )}

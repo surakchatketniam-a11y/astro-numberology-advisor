@@ -17,13 +17,13 @@ import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
 
 const TONE_BADGE = {
-  high: { label: 'พลังโดดเด่น', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30' },
-  good: { label: 'พลังส่งเสริม', cls: 'bg-sky-500/15 text-sky-300 border-sky-400/30' },
-  balance: { label: 'จุดบริหารสมดุล', cls: 'bg-amber-500/15 text-amber-300 border-amber-400/30' },
+  high: { label: 'พลังโดดเด่น', cls: 'bg-[#2e2300] text-[#FFC000] border border-[#594300]' },
+  good: { label: 'พลังส่งเสริม', cls: 'bg-[#0b222e] text-[#29ABE2] border border-[#1b4f68]' },
+  balance: { label: 'จุดบริหารสมดุล', cls: 'bg-[#121212] text-[#a6a6a6] border border-[#494949]' },
 };
 
 export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory }) {
-  const [mode, setMode] = useState('phone'); // 'phone' | 'plate'
+  const [mode, setMode] = useState('phone');
   const [inputValue, setInputValue] = useState('');
   const [userGoal, setUserGoal] = useState('');
 
@@ -58,7 +58,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
       setInputError(
         mode === 'phone'
           ? 'กรุณากรอกเบอร์โทรศัพท์อย่างน้อย 4 หลัก (แนะนำ 10 หลัก เช่น 089-456-1595)'
-          : 'กรุณากรอกเลขทะเบียนรถที่มีตัวเลข (เช่น 1กข 4569 หรือ กข 5959)'
+          : 'กรุณากรอกเลขทะเบียนรถที่มีตัวเลข (เช่น 1กข 4569 หรือ กท 5959)'
       );
       return;
     }
@@ -138,28 +138,31 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
   const offlineLineSummary = result ? generateNumerologyLineSummary(result) : '';
 
   return (
-    <div className="space-y-5">
-      {/* Input Card */}
-      <form onSubmit={handleAnalyze} className="glass-card rounded-2xl p-4 sm:p-6 space-y-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-semibold text-amber-200 flex items-center gap-2">
-            <Hash className="h-5 w-5 text-amber-400" />
-            วิเคราะห์เลขศาสตร์เบื้องต้น (Offline Instant)
+    <div className="space-y-6">
+      {/* Input Panel */}
+      <form onSubmit={handleAnalyze} className="lambo-panel p-5 sm:p-8 space-y-6">
+        <div className="border-b border-[#333333] pb-4">
+          <p className="font-display-latin text-xs text-[#FFC000] tracking-[0.225px] mb-1">
+            NUMEROLOGY ENGINE
+          </p>
+          <h2 className="text-xl sm:text-2xl font-medium text-white flex items-center gap-2.5">
+            <Hash className="h-5 w-5 text-[#FFC000] shrink-0" />
+            วิเคราะห์เลขศาสตร์เบื้องต้น
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            แยกคู่เลขเด่น คำนวณผลรวม และแปลความหมายเชิงจิตวิทยาได้ทันที
+          <p className="text-sm sm:text-base text-[#7D7D7D] mt-1">
+            แยกคู่เลขเด่น คำนวณผลรวม และแปลความหมายเชิงจิตวิทยาได้ทันทีแบบออฟไลน์
           </p>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
+        {/* Sharp Segmented Toggle */}
+        <div className="grid grid-cols-2 border border-[#333333] bg-black">
           <button
             type="button"
             onClick={() => handleModeChange('phone')}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm font-medium transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-3.5 text-sm sm:text-base font-medium transition-colors cursor-pointer ${
               mode === 'phone'
-                ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#202020] text-white border-b-2 border-b-[#FFC000]'
+                : 'text-[#7D7D7D] hover:text-white border-b-2 border-b-transparent'
             }`}
           >
             <Phone className="h-4 w-4" />
@@ -168,10 +171,10 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
           <button
             type="button"
             onClick={() => handleModeChange('plate')}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm font-medium transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-3.5 text-sm sm:text-base font-medium transition-colors cursor-pointer border-l border-[#333333] ${
               mode === 'plate'
-                ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#202020] text-white border-b-2 border-b-[#FFC000]'
+                : 'text-[#7D7D7D] hover:text-white border-b-2 border-b-transparent'
             }`}
           >
             <Car className="h-4 w-4" />
@@ -180,19 +183,21 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
         </div>
 
         <div>
-          <label className="block text-xs text-slate-300 mb-1.5">
-            {mode === 'phone' ? 'กรอกเบอร์โทรศัพท์ (10 หลัก)' : 'กรอกเลขทะเบียนรถ (รองรับอักษรไทยและตัวเลข)'}
+          <label className="block text-sm text-[#a6a6a6] mb-2">
+            {mode === 'phone'
+              ? 'กรอกเบอร์โทรศัพท์ (10 หลัก)'
+              : 'กรอกเลขทะเบียนรถ (รองรับอักษรไทยและตัวเลข)'}
           </label>
           <input
             type={mode === 'phone' ? 'tel' : 'text'}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={mode === 'phone' ? 'เช่น 089-456-1595' : 'เช่น 1กข 4569 หรือ กท 5959'}
-            className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-4 py-3 text-base sm:text-lg tracking-wider text-slate-100 placeholder:text-slate-500 placeholder:tracking-normal placeholder:text-sm"
+            className="lambo-input text-lg py-3.5"
           />
           {inputError && (
-            <p className="mt-1.5 text-xs text-rose-300 flex items-center gap-1">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <p className="mt-2 text-sm text-[#ff8a80] flex items-center gap-1.5">
+              <AlertCircle className="h-4 w-4 shrink-0" />
               {inputError}
             </p>
           )}
@@ -200,7 +205,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
 
         <button
           type="submit"
-          className="gold-button w-full rounded-xl py-3 px-4 text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer"
+          className="lambo-btn-gold w-full px-6 py-4 text-base flex items-center justify-center gap-2 cursor-pointer"
         >
           <Hash className="h-4 w-4" />
           วิเคราะห์คู่เลขและผลรวมทันที
@@ -209,19 +214,21 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
 
       {/* Instant Results */}
       {result && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Number Breakdown & Sums */}
-          <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+          <div className="lambo-card border-t-2 border-t-[#FFC000] p-5 sm:p-6 space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#333333]">
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[#7D7D7D]">
                   {result.type === 'phone' ? 'เบอร์โทรศัพท์ที่วิเคราะห์' : 'เลขทะเบียนรถที่วิเคราะห์'}
                 </p>
-                <p className="text-xl sm:text-2xl font-bold tracking-wider text-amber-200 mt-0.5">
+                <p className="text-2xl sm:text-3xl font-medium text-white mt-1">
                   {result.type === 'phone' && result.prefix ? (
                     <>
-                      <span className="text-slate-500">{result.prefix}-</span>
-                      <span>{result.core7.slice(0, 3)}-{result.core7.slice(3)}</span>
+                      <span className="text-[#666666]">{result.prefix}-</span>
+                      <span className="text-[#FFC000]">
+                        {result.core7.slice(0, 3)}-{result.core7.slice(3)}
+                      </span>
                     </>
                   ) : (
                     result.formatted
@@ -229,36 +236,36 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
                 </p>
               </div>
               {result.type === 'phone' && (
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-200">
+                <span className="lambo-badge bg-black border border-[#FFC000] text-[#FFC000]">
                   7 ตัวท้ายเด่น: {result.core7}
                 </span>
               )}
             </div>
 
-            {/* Sum Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-900/80 border border-amber-500/25 p-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
+            {/* Sum KPI Tiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-black border border-[#333333] p-4 sm:p-5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm text-[#7D7D7D]">
                     {result.type === 'phone' ? 'ผลรวมทั้งหมด (10 หลัก)' : 'ผลรวมอักษร + ตัวเลขทั้งหมด'}
                   </span>
-                  <span className="text-2xl font-bold text-amber-300">{result.totalSumAll}</span>
+                  <span className="text-3xl font-semibold text-[#FFC000]">{result.totalSumAll}</span>
                 </div>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                <p className="text-sm sm:text-base text-[#F5F5F5] mt-3 leading-[1.7]">
                   {result.sumSummary.description}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-slate-900/80 border border-sky-400/20 p-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
+              <div className="bg-black border border-[#333333] p-4 sm:p-5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm text-[#7D7D7D]">
                     {result.type === 'phone' ? 'ผลรวม 7 ตัวท้าย' : 'ผลรวมเฉพาะตัวเลข'}
                   </span>
-                  <span className="text-2xl font-bold text-sky-300">
+                  <span className="text-3xl font-semibold text-[#29ABE2]">
                     {result.type === 'phone' ? result.totalSumCore7 : result.digitSum}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                <p className="text-sm sm:text-base text-[#F5F5F5] mt-3 leading-[1.7]">
                   {result.type === 'phone'
                     ? result.core7Summary.description
                     : result.digitSumSummary.description}
@@ -268,20 +275,20 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
 
             {/* Thai Character Breakdown for License Plates */}
             {result.type === 'plate' && result.charBreakdown.length > 0 && (
-              <div className="pt-1">
-                <p className="text-xs text-slate-400 mb-2">ตารางถอดค่าอักษรและตัวเลข</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="pt-2">
+                <p className="text-xs text-[#7D7D7D] mb-2.5">ตารางถอดค่าอักษรและตัวเลข</p>
+                <div className="flex flex-wrap gap-2">
                   {result.charBreakdown.map((item, idx) => (
                     <div
                       key={idx}
-                      className={`px-2.5 py-1.5 rounded-lg border text-center min-w-[44px] ${
+                      className={`px-3 py-2 border text-center min-w-[48px] ${
                         item.kind === 'thai'
-                          ? 'bg-amber-500/10 border-amber-400/30'
-                          : 'bg-slate-800/80 border-slate-700'
+                          ? 'bg-[#2e2300] border-[#594300]'
+                          : 'bg-black border-[#333333]'
                       }`}
                     >
-                      <div className="text-sm font-semibold text-slate-100">{item.char}</div>
-                      <div className="text-[11px] text-amber-300">= {item.value}</div>
+                      <div className="text-base font-semibold text-white">{item.char}</div>
+                      <div className="text-xs text-[#FFC000]">= {item.value}</div>
                     </div>
                   ))}
                 </div>
@@ -291,36 +298,36 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
 
           {/* Pairs Breakdown */}
           {result.pairs.length > 0 && (
-            <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm sm:text-base font-semibold text-slate-100">
+            <div className="lambo-panel p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#333333] pb-3">
+                <h3 className="text-base sm:text-lg font-medium text-white">
                   คู่เลขเด่น ({result.pairs.length} คู่)
                 </h3>
-                <span className="text-xs text-slate-400">เรียงตามลำดับจากหน้าไปหลัง</span>
+                <span className="text-xs text-[#7D7D7D]">เรียงตามลำดับจากหน้าไปหลัง</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {result.pairs.map((p, idx) => {
                   const tone = TONE_BADGE[p.tone] || TONE_BADGE.good;
                   return (
                     <div
                       key={`${p.pair}-${idx}`}
-                      className="rounded-xl bg-slate-900/75 border border-slate-800 p-3.5 space-y-1.5"
+                      className="bg-[#202020] border border-[#333333] p-4 space-y-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-8 w-10 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 font-bold text-base">
+                        <div className="flex items-center gap-3">
+                          <span className="inline-flex h-10 w-12 items-center justify-center bg-black border border-[#FFC000] text-[#FFC000] font-semibold text-lg">
                             {p.pair}
                           </span>
-                          <span className="text-xs sm:text-sm font-semibold text-slate-100">
+                          <span className="text-sm sm:text-base font-medium text-white">
                             {p.label}
                           </span>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${tone.cls}`}>
+                        <span className={`lambo-badge shrink-0 ${tone.cls}`}>
                           {tone.label}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">{p.meaning}</p>
+                      <p className="text-sm text-[#a6a6a6] leading-[1.7]">{p.meaning}</p>
                     </div>
                   );
                 })}
@@ -329,23 +336,28 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
           )}
 
           {/* Deep AI Analysis */}
-          <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              วิเคราะห์ความเหมาะสมเชิงลึกด้วย Gemini AI
-            </h3>
+          <div className="lambo-panel p-5 sm:p-6 space-y-4">
+            <div>
+              <p className="font-display-latin text-[11px] text-[#7D7D7D] tracking-[0.2px]">
+                DEEP ADVISORY
+              </p>
+              <h3 className="text-base sm:text-lg font-medium text-white flex items-center gap-2 mt-0.5">
+                <Sparkles className="h-4 w-4 text-[#FFC000]" />
+                วิเคราะห์ความเหมาะสมเชิงลึกด้วย Gemini AI
+              </h3>
+            </div>
             <input
               type="text"
               value={userGoal}
               onChange={(e) => setUserGoal(e.target.value)}
               placeholder="ระบุอาชีพหรือเป้าหมาย (ไม่บังคับ) เช่น งานขาย/การตลาด, เจ้าของธุรกิจ, วิศวกร"
-              className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500"
+              className="lambo-input"
             />
             <button
               type="button"
               onClick={handleDeepAnalyze}
               disabled={loadingAI}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/25 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 border border-amber-400/40 text-amber-200 py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-60"
+              className="lambo-btn-ghost w-full px-5 py-3.5 text-base font-medium flex items-center justify-center gap-2 cursor-pointer"
             >
               {loadingAI ? (
                 <>
@@ -354,7 +366,7 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="h-4 w-4 text-[#FFC000]" />
                   {settings.apiKey
                     ? `วิเคราะห์เชิงลึกด้วย AI (${settings.model})`
                     : 'ตั้งค่า Gemini API Key เพื่อวิเคราะห์เชิงลึก'}
@@ -363,8 +375,8 @@ export default function NumerologyTab({ settings, onOpenSettings, onSaveHistory 
             </button>
 
             {aiError && (
-              <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-200 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+              <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{aiError}</span>
               </div>
             )}

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'astro-advisor-v2';
-const RUNTIME_CACHE = 'astro-advisor-runtime-v2';
+const CACHE_NAME = 'astro-advisor-v3';
+const RUNTIME_CACHE = 'astro-advisor-runtime-v3';
 
 const CORE_ASSETS = [
   '/',

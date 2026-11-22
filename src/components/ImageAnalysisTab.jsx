@@ -18,7 +18,7 @@ export default function ImageAnalysisTab({
   lastZodiacResult,
 }) {
   const fileInputRef = useRef(null);
-  const [imageData, setImageData] = useState(null); // { base64, mimeType, previewUrl, fileName }
+  const [imageData, setImageData] = useState(null);
   const [userContext, setUserContext] = useState('');
   const [loadingImage, setLoadingImage] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -118,14 +118,17 @@ export default function ImageAnalysisTab({
   };
 
   return (
-    <div className="space-y-5">
-      <form onSubmit={handleAnalyze} className="glass-card rounded-2xl p-4 sm:p-6 space-y-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-semibold text-amber-200 flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-amber-400" />
+    <div className="space-y-6">
+      <form onSubmit={handleAnalyze} className="lambo-panel p-5 sm:p-8 space-y-6">
+        <div className="border-b border-[#333333] pb-4">
+          <p className="font-display-latin text-xs text-[#FFC000] tracking-[0.225px] mb-1">
+            VISION ADVISORY ENGINE
+          </p>
+          <h2 className="text-xl sm:text-2xl font-medium text-white flex items-center gap-2.5">
+            <ImageIcon className="h-5 w-5 text-[#FFC000] shrink-0" />
             วิเคราะห์จากภาพคำทำนาย (Gemini Vision)
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+          <p className="text-sm sm:text-base text-[#7D7D7D] mt-1">
             อัปโหลดภาพโพสต์ดวงรายปักษ์ ดาวใหญ่ย้าย หรือภาพคำทำนาย เพื่อให้ AI ช่วยตีความอย่างมีเหตุผลและไม่สร้างความกังวล
           </p>
         </div>
@@ -136,7 +139,7 @@ export default function ImageAnalysisTab({
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-2xl border-2 border-dashed border-slate-700 hover:border-amber-400/60 bg-slate-900/60 hover:bg-slate-900/90 transition p-7 sm:p-9 text-center cursor-pointer group"
+            className="border border-dashed border-[#494949] hover:border-[#FFC000] bg-black hover:bg-[#121212] transition-colors p-8 sm:p-10 text-center cursor-pointer"
           >
             <input
               ref={fileInputRef}
@@ -146,20 +149,20 @@ export default function ImageAnalysisTab({
               onChange={(e) => handleFileChange(e.target.files?.[0])}
             />
             {loadingImage ? (
-              <div className="flex flex-col items-center gap-2 text-amber-300">
+              <div className="flex flex-col items-center gap-3 text-[#FFC000]">
                 <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="text-sm">กำลังเตรียมรูปภาพ...</p>
+                <p className="text-base">กำลังเตรียมรูปภาพ...</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2.5">
-                <span className="h-12 w-12 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-105 transition">
+              <div className="flex flex-col items-center gap-3">
+                <span className="h-14 w-14 bg-[#181818] border border-[#333333] flex items-center justify-center text-[#FFC000]">
                   <UploadCloud className="h-6 w-6" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-slate-200">
+                  <p className="text-base font-medium text-white">
                     แตะเพื่อเลือกรูปภาพ หรือลากไฟล์มาวางที่นี่
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-sm text-[#7D7D7D] mt-1">
                     รองรับ JPG, PNG, WEBP (ระบบปรับขนาดอัตโนมัติให้อัปโหลดเร็วบนมือถือ)
                   </p>
                 </div>
@@ -167,22 +170,22 @@ export default function ImageAnalysisTab({
             )}
           </div>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden border border-amber-500/30 bg-slate-950/80">
+          <div className="border border-[#333333] bg-black">
             <img
               src={imageData.previewUrl}
               alt="ตัวอย่างภาพคำทำนาย"
               className="w-full max-h-80 object-contain mx-auto"
             />
-            <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-900/95 border-t border-slate-800">
-              <span className="text-xs text-slate-300 truncate max-w-[70%]">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#181818] border-t border-[#333333]">
+              <span className="text-sm text-[#F5F5F5] truncate max-w-[70%]">
                 {imageData.fileName}
               </span>
               <button
                 type="button"
                 onClick={handleClearImage}
-                className="inline-flex items-center gap-1 text-xs text-rose-300 hover:text-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-500/15 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-sm text-[#ff8a80] hover:bg-[#291614] px-3 py-1.5 transition-colors cursor-pointer"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
                 เปลี่ยนรูป
               </button>
             </div>
@@ -190,16 +193,16 @@ export default function ImageAnalysisTab({
         )}
 
         {/* Optional User Context */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-xs text-slate-300">
+            <label className="text-sm text-[#a6a6a6]">
               บริบทเพิ่มเติมหรือราศีของคุณ (ไม่บังคับ)
             </label>
             {lastZodiacResult && (
               <button
                 type="button"
                 onClick={handleApplyLastZodiac}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-200 transition cursor-pointer"
+                className="text-xs px-3 py-1.5 bg-[#202020] hover:bg-[#2e2300] border border-[#494949] hover:border-[#FFC000] text-[#FFCE3E] transition-colors cursor-pointer"
               >
                 + ดึงข้อมูลราศีล่าสุด ({lastZodiacResult.thaiSign.thName})
               </button>
@@ -210,13 +213,13 @@ export default function ImageAnalysisTab({
             value={userContext}
             onChange={(e) => setUserContext(e.target.value)}
             placeholder="เช่น ฉันราศีเมษ (ไทย) / ราศีพฤษภ (สากล) อยากรู้ว่าควรวางแผนงานและการเงินอย่างไรจากภาพนี้"
-            className="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 resize-none"
+            className="lambo-input resize-none"
           />
         </div>
 
         {error && (
-          <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-200 flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+          <div className="bg-[#291614] border border-[#59302d] p-4 text-sm text-[#ff8a80] flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
@@ -224,7 +227,7 @@ export default function ImageAnalysisTab({
         <button
           type="submit"
           disabled={loadingAI || !imageData}
-          className="gold-button w-full rounded-xl py-3 px-4 text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="lambo-btn-gold w-full px-6 py-4 text-base flex items-center justify-center gap-2 cursor-pointer"
         >
           {loadingAI ? (
             <>
@@ -243,7 +246,7 @@ export default function ImageAnalysisTab({
       </form>
 
       {aiResult && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <FormattedAnalysis content={aiResult.analysis} model={settings.model} />
           <LineShareBox
             text={aiResult.lineSummary}

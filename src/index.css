@@ -1,90 +1,173 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 @layer base {
-  :root {
-    --font-sans: 'Noto Sans Thai', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-display: 'Cinzel', 'Noto Sans Thai', serif;
-  }
-
   html {
-    font-family: var(--font-sans);
-    background-color: #0b1120;
-    color: #f1f5f9;
+    font-family: var(--font-body);
+    background-color: #000000;
+    color: #FFFFFF;
     scroll-behavior: smooth;
   }
 
   body {
     min-height: 100dvh;
-    background-color: #0b1120;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -15%, rgba(212, 175, 55, 0.12), transparent 65%),
-      radial-gradient(ellipse 60% 45% at 85% 20%, rgba(56, 189, 248, 0.06), transparent 60%),
-      radial-gradient(ellipse 50% 40% at 15% 80%, rgba(180, 83, 9, 0.07), transparent 60%);
-    background-attachment: fixed;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-size: 16px;
+    line-height: var(--text-body-ui-lh);
+    overflow-wrap: break-word;
   }
 }
 
-.font-display {
-  font-family: var(--font-display);
+.font-display-latin {
+  font-family: Inter, system-ui, sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
 }
 
-.glass-card {
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.65));
-  border: 1px solid rgba(212, 175, 55, 0.18);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 10px 35px -10px rgba(2, 6, 23, 0.7);
+/* Surface elevation via color layering — no shadows, no gradients, sharp 0px corners */
+.lambo-panel {
+  background-color: #181818;
+  border: 1px solid #333333;
+  border-radius: 0px;
 }
 
-.glass-card-subtle {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+.lambo-card {
+  background-color: #202020;
+  border: 1px solid #333333;
+  border-radius: 0px;
 }
 
-.gold-gradient-text {
-  background: linear-gradient(135deg, #fef3c7 0%, #e5c158 45%, #d4af37 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.lambo-inset {
+  background-color: #121212;
+  border: 1px solid #262626;
+  border-radius: 0px;
 }
 
-.gold-button {
-  background: linear-gradient(135deg, #d4af37 0%, #b45309 100%);
-  color: #0b1120;
+/* Primary Lamborghini Gold CTA — sharp 0px, color-only hover */
+.lambo-btn-gold {
+  background-color: #FFC000;
+  color: #000000;
+  border: 1px solid #FFC000;
+  border-radius: 0px;
   font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.25);
+  min-height: 48px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.gold-button:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.38);
-  transform: translateY(-1px);
+.lambo-btn-gold:hover:not(:disabled) {
+  background-color: #917300;
+  border-color: #917300;
+  color: #FFFFFF;
 }
 
-.gold-button:active:not(:disabled) {
-  transform: translateY(0);
+.lambo-btn-gold:focus-visible {
+  outline: 2px solid #FFC000;
+  outline-offset: 2px;
+}
+
+.lambo-btn-gold:disabled {
+  background-color: #664d00;
+  border-color: #664d00;
+  color: #000000;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secondary Transparent Ghost CTA — 1px solid white 50%, hover Teal Action */
+.lambo-btn-ghost {
+  background-color: transparent;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0px;
+  min-height: 48px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lambo-btn-ghost:hover:not(:disabled) {
+  background-color: #1EAEDB;
+  border-color: #1EAEDB;
+  color: #FFFFFF;
+}
+
+.lambo-btn-ghost:focus-visible {
+  outline: 2px solid #FFC000;
+  outline-offset: 2px;
+}
+
+.lambo-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* White Filled Button */
+.lambo-btn-white {
+  background-color: #FFFFFF;
+  color: #000000;
+  border: 1px solid #FFFFFF;
+  border-radius: 0px;
+  font-weight: 600;
+  min-height: 48px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.lambo-btn-white:hover:not(:disabled) {
+  background-color: #E6E6E6;
+  border-color: #E6E6E6;
+}
+
+/* Sharp Input / Select */
+.lambo-input {
+  width: 100%;
+  background-color: #000000;
+  color: #FFFFFF;
+  border: 1px solid #494949;
+  border-radius: 0px;
+  min-height: 46px;
+  padding: 10px 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease;
+}
+
+.lambo-input::placeholder {
+  color: #7D7D7D;
+}
+
+.lambo-input:focus {
+  outline: none;
+  border-color: #FFC000;
+}
+
+/* Micro metallic badge (2px radius max per DESIGN.md) */
+.lambo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 2px;
+  line-height: 1.4;
 }
 
 .safe-pb {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-/* Custom subtle scrollbars */
+/* Flat achromatic scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
-  border-radius: 9999px;
+  background: #333333;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.45);
+  background: #FFC000;
 }

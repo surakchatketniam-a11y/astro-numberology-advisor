@@ -1,0 +1,102 @@
+/* Lamborghini - design tokens (from DESIGN.md Hub) */
+:root {
+  --color-lamborghini-gold: #FFC000;
+  --color-pure-white: #FFFFFF;
+  --color-dark-gold: #917300;
+  --color-gold-text: #FFCE3E;
+  --color-cyan-pulse: #29ABE2;
+  --color-link-blue: #3860BE;
+  --color-absolute-black: #000000;
+  --color-charcoal: #202020;
+  --color-dark-iron: #181818;
+  --color-overlay-black: rgba(0, 0, 0, 0.7);
+  --color-near-white: #F8F8F8;
+  --color-mist: #E6E6E6;
+  --color-smoke: #F5F5F5;
+  --color-graphite: #494949;
+  --color-ash: #7D7D7D;
+  --color-steel: #969696;
+  --color-slate: #666666;
+  --color-iron: #555555;
+  --color-shadow: #313131;
+  --color-teal-action: #1EAEDB;
+
+  --radius-none: 0px;
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 20px;
+
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-5: 5px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-15: 15px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-56: 56px;
+  --space-base: 8px;
+
+  --app-page: var(--color-absolute-black);
+  --app-surface: var(--color-dark-iron);
+  --app-surface-elevated: var(--color-charcoal);
+  --app-surface-muted: #121212;
+  --app-border: #333333;
+  --app-border-subtle: #1a1a1a;
+  --app-border-strong: #707070;
+  --app-text: var(--color-pure-white);
+  --app-text-muted: #a6a6a6;
+  --app-text-subtle: #7D7D7D;
+  --app-accent: var(--color-lamborghini-gold);
+  --app-accent-hover: var(--color-dark-gold);
+  --app-accent-strong: var(--color-lamborghini-gold);
+  --app-accent-soft: #2e2300;
+  --app-accent-text: var(--color-gold-text);
+  --app-accent-border: #594300;
+  --app-accent-disabled: #664d00;
+  --app-on-accent: var(--color-absolute-black);
+  --app-focus: var(--color-lamborghini-gold);
+  --app-link: #6080cb;
+  --app-overlay: rgba(0, 0, 0, 0.78);
+  --app-danger: #ff8a80;
+  --app-danger-soft: #291614;
+  --app-danger-border: #59302d;
+  --app-success: #4ade80;
+  --app-success-soft: #0c2414;
+  --app-success-border: #1a4e2d;
+  --app-warning: #fbbf24;
+  --app-warning-soft: #281f06;
+  --app-warning-border: #58430d;
+  --app-info: #29ABE2;
+  --app-info-soft: #0b222e;
+  --app-info-border: #1b4f68;
+
+  --app-radius-control: 0px;
+  --app-radius-card: 0px;
+
+  --font-display: Inter, 'Anuphan', 'Noto Sans Thai', system-ui, sans-serif;
+  --font-body: Inter, 'Anuphan', 'Noto Sans Thai', system-ui, sans-serif;
+  --font-thai-display: 'Anuphan', 'Noto Sans Thai', sans-serif;
+  --font-thai-body: 'Anuphan', 'Noto Sans Thai', sans-serif;
+
+  --text-hero-display-lh: 0.92;
+  --text-display-2-lh: 1.13;
+  --text-section-title-lh: 1.19;
+  --text-sub-section-lh: 1.15;
+  --text-feature-heading-lh: 1.37;
+  --text-body-ui-lh: 1.5;
+}
+
+/* Thai content: no letter-spacing or uppercase, taller line-height */
+:root:lang(th) {
+  --text-hero-display-lh: 1.3;
+  --text-display-2-lh: 1.3;
+  --text-section-title-lh: 1.3;
+  --text-sub-section-lh: 1.3;
+  --text-feature-heading-lh: 1.4;
+  --text-body-ui-lh: 1.7;
+}

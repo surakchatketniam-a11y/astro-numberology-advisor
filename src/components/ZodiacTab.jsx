@@ -16,8 +16,42 @@ import {
   generateZodiacLineSummary,
 } from '../utils/zodiac';
 import { callGeminiAdvisor } from '../services/gemini';
+import { PROVINCE_NAMES } from '../utils/provinces';
+import { formatDegree } from '../utils/ephemeris';
 import FormattedAnalysis from './FormattedAnalysis';
+
+function PositionRows({ chart, accent }) {
+  const rows = [
+    ['อาทิตย์', chart.sun],
+    ['จันทร์', chart.moon],
+    ['ลัคนา', chart.asc],
+  ].filter(([, body]) => body);
+  return (
+    <div className="bg-black border border-[#333333] divide-y divide-[#202020] text-sm">
+      {rows.map(([label, body]) => (
+        <div key={label} className="px-4 py-2.5 flex items-center justify-between gap-3">
+          <span className="text-[#7D7D7D]">{label}</span>
+          <span className="text-white font-medium text-right">
+            <span className={accent}>{body.sign.thName}</span> {formatDegree(body.degreeInSign)}
+            {body.uncertain && <span className="text-[#7D7D7D] font-normal"> (โดยประมาณ)</span>}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 import LineShareBox from './LineShareBox';
+
+function positionText(chart) {
+  return [
+    ['อาทิตย์', chart.sun],
+    ['จันทร์', chart.moon],
+    ['ลัคนา', chart.asc],
+  ]
+    .filter(([, b]) => b)
+    .map(([label, b]) => `${label}${b.sign.thName} ${formatDegree(b.degreeInSign)}`)
+    .join(', ');
+}
 
 export default function ZodiacTab({
   settings,
@@ -93,6 +127,9 @@ export default function ZodiacTab({
         result.birthProvince ? `- จังหวัดที่เกิด: ${result.birthProvince}` : `- จังหวัดที่เกิด: ไม่ระบุ`,
         `- โหราศาสตร์ไทย (นิรายนะวิธี): ${result.thaiSign.thName} (${result.thaiSign.element}, ดาวประจำตัว: ${result.thaiSign.thaiRuler})`,
         `- โหราศาสตร์สากล (สายนะวิธี): ${result.westernSign.thName} / ${result.westernSign.enName} (${result.westernSign.element}, ดาวประจำตัว: ${result.westernSign.westernRuler})`,
+        `- ตำแหน่งดาวจริง (นิรายนะ Lahiri ${result.ayanamsa.toFixed(2)}°): ${positionText(result.thai)}`,
+        `- ตำแหน่งดาวจริง (สายนะ): ${positionText(result.western)}`,
+        result.notes.length ? `- ข้อจำกัดของข้อมูล: ${result.notes.join(' / ')}` : '',
         `- เลขรหัสชีวิต (Life Path Number): ${result.lifePathNumber}`,
         focusTopic.trim() ? `- ประเด็นที่ผู้ใช้อยากปรึกษาเป็นพิเศษ: ${focusTopic.trim()}` : '',
         ``,
@@ -140,7 +177,7 @@ export default function ZodiacTab({
             เปรียบเทียบราศีไทยและสากล
           </h2>
           <p className="text-sm sm:text-base text-[#7D7D7D] mt-1">
-            คำนวณทันทีแบบออฟไลน์ เทียบโหราศาสตร์ไทย (กลางเดือน) กับสากล (19–23 ของเดือน)
+            คำนวณจากตำแหน่งดาวจริงแบบออฟไลน์ เทียบโหราศาสตร์ไทย (นิรายนะ Lahiri) กับสากล (สายนะ)
           </p>
         </div>
 
@@ -197,7 +234,7 @@ export default function ZodiacTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div>
             <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-[#7D7D7D]" /> เวลาเกิด (ไม่บังคับ — เสริมวิเคราะห์ AI)
+              <Clock className="h-4 w-4 text-[#7D7D7D]" /> เวลาเกิด (ไม่บังคับ — ใช้คำนวณจันทร์และลัคนา)
             </label>
             <input
               type="time"
@@ -209,15 +246,21 @@ export default function ZodiacTab({
 
           <div>
             <label className="block text-sm text-[#7D7D7D] mb-2 flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-[#7D7D7D]" /> จังหวัดที่เกิด (ไม่บังคับ)
+              <MapPin className="h-4 w-4 text-[#7D7D7D]" /> จังหวัดที่เกิด (ไม่บังคับ — ใช้คำนวณลัคนา)
             </label>
             <input
               type="text"
               value={birthProvince}
               onChange={(e) => setBirthProvince(e.target.value)}
               placeholder="เช่น กรุงเทพมหานคร, เชียงใหม่"
+              list="th-province-list"
               className="lambo-input"
             />
+            <datalist id="th-province-list">
+              {PROVINCE_NAMES.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
           </div>
         </div>
 
@@ -262,13 +305,15 @@ export default function ZodiacTab({
                     {result.thaiSign.thName}
                   </h3>
                   <p className="text-sm text-[#7D7D7D] mt-0.5">
-                    ช่วงวันที่: {result.thaiSign.thaiRange}
+                    ช่วงวันที่โดยประมาณ: {result.thaiSign.thaiRange}
                   </p>
                 </div>
                 <span className="lambo-badge bg-black border border-[#494949] text-[#FFCE3E]">
                   {result.thaiSign.element}
                 </span>
               </div>
+
+              <PositionRows chart={result.thai} accent="text-[#FFCE3E]" />
 
               <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
                 <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
@@ -298,13 +343,15 @@ export default function ZodiacTab({
                     {result.westernSign.thName} ({result.westernSign.enName})
                   </h3>
                   <p className="text-sm text-[#7D7D7D] mt-0.5">
-                    ช่วงวันที่: {result.westernSign.westernRange}
+                    ช่วงวันที่โดยประมาณ: {result.westernSign.westernRange}
                   </p>
                 </div>
                 <span className="lambo-badge bg-black border border-[#494949] text-[#29ABE2]">
                   {result.westernSign.element}
                 </span>
               </div>
+
+              <PositionRows chart={result.western} accent="text-[#29ABE2]" />
 
               <div className="bg-black border border-[#333333] px-4 py-2.5 text-sm flex items-center justify-between">
                 <span className="text-[#7D7D7D]">ดาวประจำตัว</span>
@@ -334,6 +381,11 @@ export default function ZodiacTab({
                   : 'มุมมองเปรียบเทียบ 2 ระบบ (ไทย vs สากล)'}
               </p>
               <p className="text-[#a6a6a6]">{result.comparisonNote}</p>
+              {result.notes.map((note) => (
+                <p key={note} className="text-sm text-[#7D7D7D] mt-2">
+                  * {note}
+                </p>
+              ))}
             </div>
           </div>
 

@@ -1,3 +1,6 @@
+import { computeBirthChart, formatDegree } from './ephemeris';
+import { findProvince } from './provinces';
+
 export const ZODIAC_DATA = {
   aries: {
     id: 'aries',
@@ -256,6 +259,21 @@ export function calculateLifePathNumber(yearAD, month, day) {
   return sum;
 }
 
+function describeBody(position, uncertain = false) {
+  if (!position) return null;
+  return {
+    sign: ZODIAC_DATA[position.signId],
+    degreeInSign: position.degreeInSign,
+    longitude: position.longitude,
+    uncertain,
+  };
+}
+
+/**
+ * เปรียบเทียบราศีไทย (นิรายนะ, Lahiri) กับราศีสากล (สายนะ) จากตำแหน่งดาวจริง
+ * ราศีอาทิตย์: คำนวณจากเวลาเกิด (หรือเที่ยงวันถ้าไม่ระบุ)
+ * ราศีจันทร์/ลัคนา: แม่นเมื่อมีเวลาเกิด (ลัคนาต้องรู้จังหวัดที่เกิดด้วย)
+ */
 export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', birthProvince = '' }) {
   const d = Number(day);
   const m = Number(month);
@@ -263,16 +281,48 @@ export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', 
 
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = THAI_DAYS[dateObj.getDay()];
-  const thaiSign = getThaiSiderealSign(m, d);
-  const westernSign = getWesternTropicalSign(m, d);
+  const province = findProvince(birthProvince);
+  const chart = computeBirthChart({ yearAD: y, month: m, day: d, birthTime, location: province });
+
+  const thai = {
+    sun: describeBody(chart.sidereal.sun, chart.uncertain.sun),
+    moon: describeBody(chart.sidereal.moon, chart.uncertain.moon),
+    asc: describeBody(chart.sidereal.asc),
+  };
+  const western = {
+    sun: describeBody(chart.tropical.sun, chart.uncertain.sun),
+    moon: describeBody(chart.tropical.moon, chart.uncertain.moon),
+    asc: describeBody(chart.tropical.asc),
+  };
+
+  const thaiSign = thai.sun.sign;
+  const westernSign = western.sun.sign;
   const isSameSign = thaiSign.id === westernSign.id;
   const lifePathNumber = calculateLifePathNumber(y, m, d);
+  const ayanamsaText = `${chart.ayanamsa.toFixed(2)}°`;
 
   const comparisonNote = isSameSign
     ? `ทั้งโหราศาสตร์ไทยและโหราศาสตร์สากลชี้ไปที่${thaiSign.thName} (${thaiSign.enName}) ตรงกัน แสดงถึงเอกลักษณ์ของ${thaiSign.element}ที่ชัดเจนและสอดคล้องกันทั้งมุมมองภายในและบุคลิกที่แสดงออก`
-    : `โหราศาสตร์ไทยตรงกับ${thaiSign.thName} (${thaiSign.element}) ขณะที่โหราศาสตร์สากลตรงกับ${westernSign.thName} (${westernSign.element}) ความต่างนี้เกิดจากจุดอ้างอิงดวงดาวต่างกันประมาณ 24 องศา (Ayanamsa) ในเชิงจิตวิทยาสามารถมองเป็น "จุดแข็งสองมิติ" ที่เสริมกันได้`;
+    : `โหราศาสตร์ไทยตรงกับ${thaiSign.thName} (${thaiSign.element}) ขณะที่โหราศาสตร์สากลตรงกับ${westernSign.thName} (${westernSign.element}) ความต่างนี้เกิดจากจุดอ้างอิงดวงดาวต่างกันราว ${ayanamsaText} (อายนางศะ Lahiri ณ ปีเกิด) ในเชิงจิตวิทยาสามารถมองเป็น "จุดแข็งสองมิติ" ที่เสริมกันได้`;
 
   const formattedDateTH = `${d} ${THAI_MONTHS[m - 1]} พ.ศ. ${y + 543} (${y})`;
+
+  const notes = [];
+  if (!chart.hasTime) {
+    notes.push('ไม่ได้ระบุเวลาเกิด: ราศีจันทร์คำนวณที่เที่ยงวัน และไม่สามารถคำนวณลัคนาได้');
+  } else if (!province) {
+    notes.push(
+      birthProvince.trim()
+        ? `ไม่พบจังหวัด "${birthProvince.trim()}" ในรายชื่อ จึงยังไม่คำนวณลัคนา`
+        : 'ไม่ได้ระบุจังหวัดที่เกิด จึงยังไม่คำนวณลัคนา'
+    );
+  }
+  if (thai.sun.uncertain || western.sun.uncertain) {
+    notes.push('วันเกิดตรงกับวันที่ดาวอาทิตย์ย้ายราศี ควรระบุเวลาเกิดเพื่อความแม่นยำ');
+  }
+  if (thai.moon.uncertain || western.moon.uncertain) {
+    notes.push('ดวงจันทร์ย้ายราศีในวันเกิด ควรระบุเวลาเกิดเพื่อยืนยันราศีจันทร์');
+  }
 
   return {
     day: d,
@@ -282,13 +332,24 @@ export function calculateZodiacComparison({ day, month, yearAD, birthTime = '', 
     formattedDateTH,
     birthTime,
     birthProvince,
+    province,
     dayOfWeek,
     thaiSign,
     westernSign,
     isSameSign,
     lifePathNumber,
     comparisonNote,
+    ayanamsa: chart.ayanamsa,
+    thai,
+    western,
+    notes,
   };
+}
+
+function bodyLine(label, body) {
+  if (!body) return null;
+  const flag = body.uncertain ? ' (โดยประมาณ)' : '';
+  return `${label}: ${body.sign.thName} ${formatDegree(body.degreeInSign)}${flag}`;
 }
 
 export function generateZodiacLineSummary(result) {
@@ -299,10 +360,16 @@ export function generateZodiacLineSummary(result) {
     result.birthProvince ? `จังหวัดเกิด: ${result.birthProvince}` : null,
     ``,
     `1) โหราศาสตร์ไทย (นิรายนะวิธี): ${result.thaiSign.thName} (${result.thaiSign.element})`,
+    bodyLine('อาทิตย์', result.thai.sun),
+    bodyLine('จันทร์', result.thai.moon),
+    bodyLine('ลัคนา', result.thai.asc),
     `ดาวประจำตัว: ${result.thaiSign.thaiRuler}`,
     `จุดเด่น: ${result.thaiSign.psychology}`,
     ``,
     `2) โหราศาสตร์สากล (สายนะวิธี): ${result.westernSign.thName} / ${result.westernSign.enName} (${result.westernSign.element})`,
+    bodyLine('อาทิตย์', result.western.sun),
+    bodyLine('จันทร์', result.western.moon),
+    bodyLine('ลัคนา', result.western.asc),
     `ดาวประจำตัว: ${result.westernSign.westernRuler}`,
     `จุดเด่น: ${result.westernSign.psychology}`,
     ``,

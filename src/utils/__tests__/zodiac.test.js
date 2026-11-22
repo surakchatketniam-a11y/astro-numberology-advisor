@@ -128,3 +128,40 @@ describe('generateZodiacLineSummary', () => {
     expect(full).toContain('จังหวัดเกิด: เชียงใหม่');
   });
 });
+
+describe('calculateZodiacComparison — real positions', () => {
+  it('uses the true Sun position for the Thai sign (Apr 2024 boundary)', () => {
+    expect(calculateZodiacComparison({ day: 12, month: 4, yearAD: 2024 }).thaiSign.id).toBe('pisces');
+    expect(calculateZodiacComparison({ day: 15, month: 4, yearAD: 2024 }).thaiSign.id).toBe('aries');
+  });
+
+  it('provides Sun and Moon always, ascendant only with time + known province', () => {
+    const base = calculateZodiacComparison({ day: 15, month: 4, yearAD: 1995 });
+    expect(base.thai.sun.sign.id).toBe('aries');
+    expect(base.thai.moon).toBeTruthy();
+    expect(base.thai.asc).toBeNull();
+    expect(base.notes.join(' ')).toContain('ไม่ได้ระบุเวลาเกิด');
+
+    const full = calculateZodiacComparison({
+      day: 15, month: 4, yearAD: 1995, birthTime: '08:30', birthProvince: 'เชียงใหม่',
+    });
+    expect(full.thai.asc.sign).toBeTruthy();
+    expect(full.western.asc.sign).toBeTruthy();
+    expect(full.province.name).toBe('เชียงใหม่');
+
+    const unknown = calculateZodiacComparison({
+      day: 15, month: 4, yearAD: 1995, birthTime: '08:30', birthProvince: 'ที่ไหนสักแห่ง',
+    });
+    expect(unknown.thai.asc).toBeNull();
+    expect(unknown.notes.join(' ')).toContain('ไม่พบจังหวัด');
+  });
+
+  it('includes Sun/Moon/Ascendant lines in the LINE summary', () => {
+    const text = generateZodiacLineSummary(
+      calculateZodiacComparison({ day: 15, month: 4, yearAD: 1995, birthTime: '08:30', birthProvince: 'กรุงเทพ' })
+    );
+    expect(text).toContain('อาทิตย์:');
+    expect(text).toContain('จันทร์:');
+    expect(text).toContain('ลัคนา:');
+  });
+});

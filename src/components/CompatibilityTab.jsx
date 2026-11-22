@@ -12,6 +12,7 @@ import {
 import { THAI_MONTHS } from '../utils/zodiac';
 import { analyzeCompatibility, displayName } from '../utils/compatibility';
 import { callGeminiAdvisor } from '../services/gemini';
+import ProfileBar from './ProfileBar';
 import FormattedAnalysis from './FormattedAnalysis';
 import LineShareBox from './LineShareBox';
 
@@ -29,6 +30,11 @@ function PersonCard({ title, accent, value, onChange }) {
   return (
     <div className={`lambo-card border-t-2 ${accent} p-5 space-y-4`}>
       <p className="font-display-latin text-[11px] text-[#7D7D7D] tracking-[0.2px]">{title}</p>
+      <ProfileBar
+        current={{ day, month: value.month, yearAD: value.yearAD, birthTime: value.birthTime, birthProvince: '' }}
+        defaultName={value.name}
+        onPick={(p) => set({ name: p.name, day: p.day, month: p.month, yearAD: p.yearAD, birthTime: p.birthTime })}
+      />
       <input
         type="text"
         value={value.name}

@@ -2,6 +2,8 @@ import React from 'react';
 import { AlertCircle, Loader2, Sparkles, Square } from 'lucide-react';
 import { ZODIAC_DATA } from '../utils/zodiac';
 import { SIGN_IDS } from '../utils/ephemeris';
+import { useProfiles } from '../context/ProfilesContext';
+import { profileSignId } from '../utils/profiles';
 
 const SIGN_KEY = 'astro_advisor_daily_sign_v1';
 
@@ -33,12 +35,33 @@ export function ScoreBar({ score }) {
 }
 
 export function SignPicker({ signId, onChange, note }) {
+  const { profiles } = useProfiles();
   return (
     <div>
       <p className="text-sm text-[#a6a6a6] mb-2">
         ราศีกำเนิด (ไทย)
         {note && <span className="text-[#7D7D7D]"> — {note}</span>}
       </p>
+      {profiles.length > 0 && (
+        <select
+          aria-label="ใช้ราศีจากโปรไฟล์"
+          value=""
+          onChange={(e) => {
+            const p = profiles.find((x) => x.id === e.target.value);
+            if (p) onChange(profileSignId(p));
+          }}
+          className="lambo-input text-sm mb-3"
+        >
+          <option value="" className="bg-black text-white">
+            ใช้ราศีจากโปรไฟล์ที่บันทึกไว้...
+          </option>
+          {profiles.map((p) => (
+            <option key={p.id} value={p.id} className="bg-black text-white">
+              {p.name} ({ZODIAC_DATA[profileSignId(p)].thName})
+            </option>
+          ))}
+        </select>
+      )}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
         {SIGN_IDS.map((id) => (
           <button

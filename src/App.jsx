@@ -17,6 +17,7 @@ import ImageAnalysisTab from './components/ImageAnalysisTab';
 import DailyTab from './components/DailyTab';
 import MonthlyTab from './components/MonthlyTab';
 import CompatibilityTab from './components/CompatibilityTab';
+import { ProfilesProvider } from './context/ProfilesContext';
 import SettingsModal from './components/SettingsModal';
 import HistoryModal from './components/HistoryModal';
 import {
@@ -118,6 +119,7 @@ export default function App() {
   };
 
   return (
+    <ProfilesProvider>
     <div className="min-h-dvh bg-black text-white flex flex-col pb-24 md:pb-12">
       {/* Minimalist Floating Black Top Bar */}
       <header className="sticky top-0 z-30 bg-black border-b border-[#202020]">
@@ -343,5 +345,6 @@ export default function App() {
         onImport={handleImportHistory}
       />
     </div>
+    </ProfilesProvider>
   );
 }

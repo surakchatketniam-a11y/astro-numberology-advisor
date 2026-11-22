@@ -20,6 +20,7 @@ import { callGeminiAdvisor } from '../services/gemini';
 import { PROVINCE_NAMES } from '../utils/provinces';
 import { formatDegree } from '../utils/ephemeris';
 import { DignityBadge } from './common';
+import ProfileBar from './ProfileBar';
 import FormattedAnalysis from './FormattedAnalysis';
 
 function PositionRows({ chart, accent, nodeLabels = ['ราหู', 'เกตุ'] }) {
@@ -202,6 +203,17 @@ export default function ZodiacTab({
             คำนวณจากตำแหน่งดาวจริงแบบออฟไลน์ เทียบโหราศาสตร์ไทย (นิรายนะ Lahiri) กับสากล (สายนะ)
           </p>
         </div>
+
+        <ProfileBar
+          current={{ day: safeDay, month, yearAD, birthTime, birthProvince }}
+          onPick={(p) => {
+            setDay(p.day);
+            setMonth(p.month);
+            setYearAD(p.yearAD);
+            setBirthTime(p.birthTime);
+            setBirthProvince(p.birthProvince);
+          }}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>

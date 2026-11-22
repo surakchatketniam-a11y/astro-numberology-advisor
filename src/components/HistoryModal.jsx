@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  CalendarDays,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -13,6 +14,7 @@ import LineShareBox from './LineShareBox';
 
 const CATEGORY_META = {
   zodiac: { label: 'เช็กราศี & ดวงชะตา', icon: Sparkles },
+  daily: { label: 'ดวงรายวัน', icon: CalendarDays },
   numerology: { label: 'วิเคราะห์เลขศาสตร์', icon: Hash },
   image: { label: 'วิเคราะห์ภาพคำทำนาย', icon: ImageIcon },
 };

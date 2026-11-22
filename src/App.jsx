@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  CalendarDays,
   Clock,
   Compass,
   Download,
@@ -11,6 +12,7 @@ import {
 import ZodiacTab from './components/ZodiacTab';
 import NumerologyTab from './components/NumerologyTab';
 import ImageAnalysisTab from './components/ImageAnalysisTab';
+import DailyTab from './components/DailyTab';
 import SettingsModal from './components/SettingsModal';
 import HistoryModal from './components/HistoryModal';
 import {
@@ -24,8 +26,9 @@ import {
 
 const TABS = [
   { id: 'zodiac', enLabel: '01 / ZODIAC', label: 'เช็กราศี & ดวงชะตา', shortLabel: 'เช็กราศี', icon: Compass },
-  { id: 'numerology', enLabel: '02 / NUMEROLOGY', label: 'วิเคราะห์เลขศาสตร์', shortLabel: 'เลขศาสตร์', icon: Hash },
-  { id: 'image', enLabel: '03 / VISION AI', label: 'วิเคราะห์จากภาพคำทำนาย', shortLabel: 'ภาพคำทำนาย', icon: ImageIcon },
+  { id: 'daily', enLabel: '02 / DAILY', label: 'ดวงรายวัน', shortLabel: 'รายวัน', icon: CalendarDays },
+  { id: 'numerology', enLabel: '03 / NUMEROLOGY', label: 'วิเคราะห์เลขศาสตร์', shortLabel: 'เลขศาสตร์', icon: Hash },
+  { id: 'image', enLabel: '04 / VISION AI', label: 'วิเคราะห์จากภาพคำทำนาย', shortLabel: 'ภาพคำทำนาย', icon: ImageIcon },
 ];
 
 function getInitialTab() {
@@ -183,7 +186,7 @@ export default function App() {
         {/* Desktop Sharp Architectural Tab Bar */}
         <nav
           aria-label="เมนูหลัก"
-          className="hidden md:grid grid-cols-3 border border-[#333333] bg-[#181818]"
+          className="hidden md:grid grid-cols-4 border border-[#333333] bg-[#181818]"
         >
           {TABS.map((tab, index) => {
             const Icon = tab.icon;
@@ -221,13 +224,22 @@ export default function App() {
           })}
         </nav>
 
-        {/* Keep all 3 tabs mounted to preserve user input & results */}
+        {/* Keep all tabs mounted to preserve user input & results */}
         <section className={activeTab === 'zodiac' ? 'block' : 'hidden'}>
           <ZodiacTab
             settings={settings}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onSaveHistory={handleAddHistory}
             onZodiacComputed={setLastZodiacResult}
+          />
+        </section>
+
+        <section className={activeTab === 'daily' ? 'block' : 'hidden'}>
+          <DailyTab
+            settings={settings}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onSaveHistory={handleAddHistory}
+            lastZodiacResult={lastZodiacResult}
           />
         </section>
 
@@ -261,7 +273,7 @@ export default function App() {
         aria-label="เมนูหลักมือถือ"
         className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-[#333333] bg-black safe-pb"
       >
-        <div className="grid grid-cols-3 max-w-md mx-auto">
+        <div className="grid grid-cols-4 max-w-md mx-auto">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

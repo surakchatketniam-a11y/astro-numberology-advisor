@@ -119,3 +119,41 @@ export function computeBirthChart({ yearAD, month, day, birthTime = '', location
 export function formatDegree(deg, digits = 1) {
   return `${deg.toFixed(digits)}°`;
 }
+
+const LAHIRI_J2000 = 23.85306;
+
+export const PLANET_BODIES = {
+  mercury: Astronomy.Body.Mercury,
+  venus: Astronomy.Body.Venus,
+  mars: Astronomy.Body.Mars,
+  jupiter: Astronomy.Body.Jupiter,
+  saturn: Astronomy.Body.Saturn,
+};
+
+function planetEclipticJ2000(body, date) {
+  return norm360(Astronomy.Ecliptic(Astronomy.GeoVector(body, date, true)).elon);
+}
+
+/**
+ * ตำแหน่งดาวเคราะห์แบบนิรายนะ (Lahiri) และสถานะพักตร (retrograde)
+ * ลองจิจูดสุริยวิถี J2000 ลบอายนางศะ ณ J2000 เท่ากับ tropical-of-date ลบอายนางศะ ณ วันนั้นพอดี
+ * เพราะอายนางศะที่ใช้เพิ่มตามอัตราการเคลื่อนของวิษุวัต
+ */
+export function siderealPlanets(date) {
+  const dayMs = 86400000;
+  const out = {};
+  for (const [key, body] of Object.entries(PLANET_BODIES)) {
+    const lon = norm360(planetEclipticJ2000(body, date) - LAHIRI_J2000);
+    const before = planetEclipticJ2000(body, new Date(date.getTime() - dayMs));
+    const after = planetEclipticJ2000(body, new Date(date.getTime() + dayMs));
+    const delta = ((after - before + 540) % 360) - 180; // -180..180
+    out[key] = { ...describe(lon), retrograde: delta < 0 };
+  }
+  return out;
+}
+
+export function siderealMoonSun(date) {
+  const trop = tropicalLongitudes(date);
+  const ay = lahiriAyanamsa(date);
+  return { sun: describe(trop.sun - ay), moon: describe(trop.moon - ay) };
+}

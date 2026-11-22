@@ -44,6 +44,12 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
+      "name": "ดวงรายวัน",
+      "short_name": "ดวงรายวัน",
+      "url": "/?tab=daily",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "วิเคราะห์เลขศาสตร์",
       "short_name": "เลขศาสตร์",
       "url": "/?tab=numerology",
